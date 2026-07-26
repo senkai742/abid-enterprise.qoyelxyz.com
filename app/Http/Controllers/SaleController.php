@@ -158,8 +158,10 @@ class SaleController extends Controller
 
             if ($request->customer_id) {
                 $customer = Customer::where('id', $request->customer_id)->first();
-                $customer->balance = $customer->balance + (($subTotal - $discount) - $request->amount);
-                $customer->save();
+                if ($customer) {
+                    $customer->balance = $customer->balance + (($subTotal - $discount) - $request->amount);
+                    $customer->save();
+                }
             }
 
             // Return sale with debug data for frontend logging
@@ -205,8 +207,10 @@ class SaleController extends Controller
 
         if ($order->customer_id) {
             $customer = Customer::where('id', $order->customer_id)->first();
-            $customer->balance = $customer->balance - $request->amount;
-            $customer->save();
+            if ($customer) {
+                $customer->balance = $customer->balance - $request->amount;
+                $customer->save();
+            }
         }
 
         // Check if the amount exceeds the remaining balance

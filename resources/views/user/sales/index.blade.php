@@ -34,6 +34,7 @@
                     <th>{{ __('order.ID') }}</th>
                     <th>{{ __('order.Customer_Name') }}</th>
                     <th>{{ __('order.Total') }}</th>
+                    <th>{{ __('Discounted Price') }}</th>
                     <th>{{ __('order.Received_Amount') }}</th>
                     <th>{{ __('order.Status') }}</th>
                     <th>{{ __('order.To_Pay') }}</th>
@@ -46,6 +47,7 @@
                 <tr>
                     <td>{{$order->id}}</td>
                     <td>{{$order->getCustomerName()}}</td>
+                    <td>{{ config('settings.currency_symbol') }} {{number_format($order->sub_total, 2)}}</td>
                     <td>{{ config('settings.currency_symbol') }} {{$order->formattedTotal()}}</td>
                     <td>{{ config('settings.currency_symbol') }} {{$order->formattedReceivedAmount()}}</td>
                     <td>
@@ -114,8 +116,10 @@
                 <tr>
                     <th></th>
                     <th></th>
+                    <th></th> <!-- Total Subtotal footer omitted to keep simple -->
                     <th>{{ config('settings.currency_symbol') }} {{ number_format($total, 2) }}</th>
                     <th>{{ config('settings.currency_symbol') }} {{ number_format($receivedAmount, 2) }}</th>
+                    <th></th>
                     <th></th>
                     <th></th>
                     <th></th>

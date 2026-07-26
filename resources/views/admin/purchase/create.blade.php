@@ -408,7 +408,7 @@ function updateQuantity(productId, quantity) {
     if (!quantity || quantity <= 0) return;
 
     $.ajax({
-        url: '/purchase-cart/change-qty',
+        url: '/admin/purchase-cart/change-qty',
         method: 'POST',
         data: {
             product_id: productId,
@@ -429,7 +429,7 @@ function updatePurchasePrice(productId, purchasePrice) {
     if (!purchasePrice || purchasePrice <= 0) return;
 
     $.ajax({
-        url: '/purchase-cart/change-purchaseprice',
+        url: '/admin/purchase-cart/change-purchaseprice',
         method: 'POST',
         data: {
             product_id: productId,
@@ -448,7 +448,7 @@ function updatePurchasePrice(productId, purchasePrice) {
 // Remove from cart
 function removeFromCart(productId) {
     $.ajax({
-        url: '/purchase-cart/delete',
+        url: '/admin/purchase-cart/delete',
         method: 'POST',
         data: {
             product_id: productId,
@@ -467,7 +467,7 @@ function removeFromCart(productId) {
 // Empty cart
 function emptyCart() {
     $.ajax({
-        url: '/purchase-cart/empty',
+        url: '/admin/purchase-cart/empty',
         method: 'POST',
         data: {
             _method: 'DELETE',

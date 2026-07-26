@@ -62,6 +62,11 @@ class Product extends Model
     {
         return $this->hasMany(\App\Models\BranchProductStock::class);
     }
+
+    public function branch()
+    {
+        return $this->belongsTo(\App\Models\Branch::class);
+    }
     
     public function supplier()
     {

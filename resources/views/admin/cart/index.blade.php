@@ -768,11 +768,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 const installmentPlan = features.installment_plans ?
                     (document.getElementById('installment-select')?.value || null) : null;
 
+                let finalDiscountAmount = discountAmount;
+                if (hasProductDiscounts()) {
+                    let totalProductDiscounts = 0;
+                    document.querySelectorAll('.product-discount-input').forEach(input => {
+                        totalProductDiscounts += parseFloat(input.value) || 0;
+                    });
+                    finalDiscountAmount = totalProductDiscounts;
+                }
+
                 console.log('Checkout data:', {
                     customer_id: selectedCustomer.id,
                     branch_id: selectedBranch,
                     amount: amount,
-                    discount_amount: discountAmount,
+                    discount_amount: finalDiscountAmount,
                     salesman_id: salesmanId,
                     installment_plan: installmentPlan
                 });
@@ -787,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         customer_id: selectedCustomer.id,
                         branch_id: selectedBranch,
                         amount: amount,
-                        discount_amount: discountAmount,
+                        discount_amount: finalDiscountAmount,
                         salesman_id: salesmanId?salesmanId:0,
                         installment_plan: installmentPlan
                     })

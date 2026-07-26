@@ -87,9 +87,7 @@ class Sale extends Model
 
     public function total()
     {
-        return $this->items->map(function ($i) {
-            return $i->sell_price;
-        })->sum();
+        return $this->gr_total;
     }
 
     public function formattedTotal()
