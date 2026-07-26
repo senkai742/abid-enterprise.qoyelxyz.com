@@ -246,6 +246,7 @@ Route::middleware(['auth', 'admin_guard'])->prefix('admin')->group(function () {
         'destroy' => 'admin.purchase.destroy',
     ]);
     Route::get('/purchase/print/{id}', [PurchaseController::class, 'print'])->name('admin.purchase.print');
+    Route::post('/purchase/partial-payment', [PurchaseController::class, 'partialPayment'])->name('admin.purchase.partial-payment');
 
     // Admin Purchase Cart
     Route::get('/purchase-index', [PurchaseCartController::class, 'index'])->name('admin.purchases.index');

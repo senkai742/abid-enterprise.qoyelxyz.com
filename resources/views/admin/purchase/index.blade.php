@@ -55,7 +55,18 @@
                     <td>{{ config('settings.currency_symbol') }} {{number_format($purchase->paid_amount)}}</td>
                     <td>{{ config('settings.currency_symbol') }} {{number_format(max(0, $purchase->gr_total - $purchase->paid_amount))}}</td>
                     <td>{{$purchase->created_at}}</td>
-                    <td><a href="/admin/purchase/details/{{ $purchase->id }}" class="btn btn-success"><i class="fa fa-eye"></i></a></td>
+                    <td><a href="/admin/purchase/details/{{ $purchase->id }}" class="btn btn-success"><i class="fa fa-eye"></i></a>
+                        @php $due = max(0, $purchase->gr_total - $purchase->paid_amount); @endphp
+                        @if($due > 0)
+                        <button class="btn btn-sm btn-primary btn-pay-due"
+                            data-toggle="modal"
+                            data-target="#purchasePayModal"
+                            data-purchase-id="{{ $purchase->id }}"
+                            data-due-amount="{{ $due }}">
+                            Pay Due
+                        </button>
+                        @endif
+                    </td>
 
                 </tr>
                 @endforeach
@@ -77,6 +88,31 @@
     </div>
 </div>
 @endsection
+@section('model')
+<!-- Purchase Due Payment Modal -->
+<div class="modal fade" id="purchasePayModal" tabindex="-1" role="dialog" aria-labelledby="purchasePayModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="purchasePayModalLabel">Pay Due Amount</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="purchasePayForm" method="POST" action="{{ route('admin.purchase.partial-payment') }}">
+                    @csrf
+                    <input type="hidden" name="purchase_id" id="modalPurchaseId" value="">
+                    <div class="form-group">
+                        <label for="partialPayAmount">Amount to Pay (Due: <span id="modalDueAmount"></span>)</label>
+                        <input type="number" class="form-control" step="0.01" min="0.01" id="partialPayAmount" name="paid_amount" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Payment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 @section('model')
 <!-- Modal -->
 <div class="modal fade" id="modalInvoice" tabindex="-1" role="dialog" aria-labelledby="modalInvoiceLabel" aria-hidden="true">
@@ -219,18 +255,16 @@
         `);
     });
     $(document).ready(function() {
-    // Event handler when the partial payment modal is triggered
-    $('#partialPaymentModal').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget); // Button that triggered the modal
+    // Pay Due modal handler
+    $('#purchasePayModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var purchaseId = button.data('purchase-id');
+        var dueAmount = button.data('due-amount');
 
-        // Get the salesreturn ID from data-attributes
-        var salesreturnId = button.data('salesreturns-id');
-        var remainingAmount = button.data('remaining-amount');
-
-        // Find modal and set the salesreturn ID in the hidden field
         var modal = $(this);
-        modal.find('#modalsalesreturnId').val(salesreturnId);
-        modal.find('#partialAmount').attr('max', remainingAmount); // Set max value for partial payment
+        modal.find('#modalPurchaseId').val(purchaseId);
+        modal.find('#partialPayAmount').val(dueAmount).attr('max', dueAmount);
+        modal.find('#modalDueAmount').text(dueAmount);
     });
 });
 

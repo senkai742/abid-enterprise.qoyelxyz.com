@@ -201,7 +201,6 @@ class PurchaseController extends Controller
 
     public function partialPayment(Request $request)
     {
-        // return $request;
         $purchaseId = $request->purchase_id;
         $amount = $request->paid_amount;
 
@@ -209,12 +208,16 @@ class PurchaseController extends Controller
         $purchase = Purchase::findOrFail($purchaseId);
 
         // Check if the amount exceeds the remaining balance
-        $remainingAmount = $purchase->total() - $purchase->receivedAmount();
+        $remainingAmount = $purchase->gr_total - $purchase->paid_amount;
         if ($amount > $remainingAmount) {
-            return redirect()->route('purchases.index')->withErrors('Amount exceeds remaining balance');
+            return redirect()->route('admin.purchase.index')->withErrors('Amount exceeds remaining balance');
         }
 
-        // Save the payment
+        // Update the paid_amount on the purchase
+        $purchase->paid_amount = $purchase->paid_amount + $amount;
+        $purchase->save();
+
+        // Save the supplier payment record
         DB::transaction(function () use ($purchase, $amount) {
             $purchase->supplierPayments()->create([
                 'amount' => $amount,
@@ -222,7 +225,7 @@ class PurchaseController extends Controller
             ]);
         });
 
-        return redirect()->route('purchases.index')->with('success', 'Partial payment of ' . config('settings.currency_symbol') . number_format($amount, 2) . ' made successfully.');
+        return redirect()->route('admin.purchase.index')->with('success', 'Payment of ' . config('settings.currency_symbol') . number_format($amount, 2) . ' made successfully.');
     }
 
     public function print($id)
