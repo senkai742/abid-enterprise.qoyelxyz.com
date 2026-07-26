@@ -67,7 +67,7 @@
                                 <small class="text-muted d-block mb-2">Enable/disable individual features for the Point of Sale interface.</small>
 
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="feature_barcode_scanner" id="feature_barcode_scanner" value="1" {{ old('feature_barcode_scanner',  $settings->where("key","feature_barcode_scanner")->first()->value) ? 'checked' : '' }}>
+                                    <input class="form-check-input" type="checkbox" name="feature_barcode_scanner" id="feature_barcode_scanner" value="1" {{ old('feature_barcode_scanner',  $settings->where("key","feature_barcode_scanner")->first()?->value ?? '0') ? 'checked' : '' }}>
                                     <label class="form-check-label" for="feature_barcode_scanner">
                                         <strong>Barcode Scanner</strong> 
                                         
@@ -76,7 +76,7 @@
                                 </div>
 
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="feature_salesman_selection" id="feature_salesman_selection" value="1" {{ old('feature_salesman_selection', $settings->where("key","feature_salesman_selection")->first()->value) ? 'checked' : '' }}>
+                                    <input class="form-check-input" type="checkbox" name="feature_salesman_selection" id="feature_salesman_selection" value="1" {{ old('feature_salesman_selection', $settings->where("key","feature_salesman_selection")->first()?->value ?? '0') ? 'checked' : '' }}>
                                     <label class="form-check-label" for="feature_salesman_selection">
                                         <strong>Salesman Selection</strong>
                                         <br><small class="text-muted">Allow selecting a salesman for each sale</small>
@@ -84,7 +84,7 @@
                                 </div>
 
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="feature_installment_plans" id="feature_installment_plans" value="1" {{ old('feature_installment_plans', $settings->where("key","feature_installment_plans")->first()->value) ? 'checked' : '' }}>
+                                    <input class="form-check-input" type="checkbox" name="feature_installment_plans" id="feature_installment_plans" value="1" {{ old('feature_installment_plans', $settings->where("key","feature_installment_plans")->first()?->value ?? '0') ? 'checked' : '' }}>
                                     <label class="form-check-label" for="feature_installment_plans">
                                         <strong>Installment Plans</strong>
                                         <br><small class="text-muted">Allow customers to pay in installments</small>

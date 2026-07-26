@@ -249,9 +249,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Individual feature flags
     let features = {
-        barcode_scanner: '{{ $settings->where("key","feature_barcode_scanner")->first()->value }}' === '1',
-        salesman_selection: '{{ $settings->where("key","feature_salesman_selection")->first()->value }}' === '1',
-        installment_plans: '{{   $settings->where("key","feature_installment_plans")->first()->value }}' === '1'
+        barcode_scanner: '{{ $settings->where("key","feature_barcode_scanner")->first()?->value ?? "0" }}' === '1',
+        salesman_selection: '{{ $settings->where("key","feature_salesman_selection")->first()?->value ?? "0" }}' === '1',
+        installment_plans: '{{ $settings->where("key","feature_installment_plans")->first()?->value ?? "0" }}' === '1'
     };
 
     // Check if any product has discount
