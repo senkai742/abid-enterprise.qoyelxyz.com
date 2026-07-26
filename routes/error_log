@@ -1,0 +1,56 @@
+[12-Feb-2026 21:50:39 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Artisan" not found in /home/ekhaneo/public_html/routes/console.php:17
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/console.php on line 17
+[13-Feb-2026 01:27:49 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Artisan" not found in /home/ekhaneo/public_html/routes/console.php:17
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/console.php on line 17
+[13-Feb-2026 04:16:41 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Route" not found in /home/ekhaneo/public_html/routes/web.php:23
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/web.php on line 23
+[13-Feb-2026 05:04:34 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Broadcast" not found in /home/ekhaneo/public_html/routes/channels.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/channels.php on line 16
+[13-Feb-2026 05:55:41 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Route" not found in /home/ekhaneo/public_html/routes/web.php:23
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/web.php on line 23
+[13-Feb-2026 06:51:53 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Route" not found in /home/ekhaneo/public_html/routes/api.php:17
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/api.php on line 17
+[13-Feb-2026 07:14:26 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Broadcast" not found in /home/ekhaneo/public_html/routes/channels.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/channels.php on line 16
+[13-Feb-2026 22:41:33 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Route" not found in /home/ekhaneo/public_html/routes/api.php:17
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/api.php on line 17
+[27-Feb-2026 12:02:32 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Broadcast" not found in /home/ekhaneo/public_html/routes/channels.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/channels.php on line 16
+[15-Apr-2026 14:50:30 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Artisan" not found in /home/ekhaneo/public_html/routes/console.php:17
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/console.php on line 17
+[16-Apr-2026 14:29:51 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Artisan" not found in /home/ekhaneo/public_html/routes/console.php:17
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/console.php on line 17
+[16-Apr-2026 16:32:19 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Broadcast" not found in /home/ekhaneo/public_html/routes/channels.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/channels.php on line 16
+[18-Apr-2026 19:55:27 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Route" not found in /home/ekhaneo/public_html/routes/api.php:17
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/api.php on line 17
+[15-Jun-2026 11:54:19 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Support\Facades\Artisan" not found in /home/ekhaneo/public_html/routes/console.php:17
+Stack trace:
+#0 {main}
+  thrown in /home/ekhaneo/public_html/routes/console.php on line 17

