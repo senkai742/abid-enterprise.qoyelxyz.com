@@ -53,6 +53,7 @@
                     <td>{{ config('settings.currency_symbol') }} {{number_format($purchase->discount_amount)}}</td>
                     <td>{{ config('settings.currency_symbol') }} {{number_format($purchase->gr_total)}}</td>
                     <td>{{ config('settings.currency_symbol') }} {{number_format($purchase->paid_amount)}}</td>
+                    <td>{{ config('settings.currency_symbol') }} {{number_format(max(0, $purchase->gr_total - $purchase->paid_amount))}}</td>
                     <td>{{$purchase->created_at}}</td>
                     <td><a href="/admin/purchase/details/{{ $purchase->id }}" class="btn btn-success"><i class="fa fa-eye"></i></a></td>
 

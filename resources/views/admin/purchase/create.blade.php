@@ -52,6 +52,7 @@
                     <option value="">Select a supplier</option>
                     @foreach($suppliers as $supplier)
                     <option value="{{ $supplier->id }}"
+                            {{ (isset($supplier_id) && $supplier_id == $supplier->id) ? 'selected' : '' }}
                             data-balance="{{ $supplier->balance }}"
                             data-first-name="{{ $supplier->first_name }}"
                             data-last-name="{{ $supplier->last_name }}"
@@ -488,16 +489,18 @@ function calculateTotals() {
     const supplierId = $('#supplier_id').val();
 
     let newBalance = currentNewBalance;
-    let grTotal = currentGrTotal;
+    let grTotal = currentSubTotal - discountAmount;
 
     if (supplierId) {
         const supplier = suppliers.find(s => s.id == supplierId);
         if (supplier) {
-            newBalance = parseFloat(supplier.balance) + (currentSubTotal - discountAmount);
+            newBalance = parseFloat(supplier.balance) + grTotal;
+        } else {
+            newBalance = grTotal;
         }
+    } else {
+        newBalance = grTotal;
     }
-
-    grTotal = currentSubTotal - discountAmount;
 
     $('#gr_total').text(numberFormat(grTotal));
     $('#new_balance').val(numberFormat(newBalance));
@@ -538,7 +541,7 @@ function submitPurchase() {
         showLoaderOnConfirm: true,
         preConfirm: (amount) => {
             return $.ajax({
-                url: '/purchase',
+                url: '/admin/purchase',
                 method: 'POST',
                 data: {
                     supplier_id: supplierId,

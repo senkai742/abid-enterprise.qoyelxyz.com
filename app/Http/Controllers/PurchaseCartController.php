@@ -105,6 +105,7 @@ class PurchaseCartController extends Controller
         $last_balance = 0;
         $prev_balance = 0;
 
+        $supplier_id = null;
         if ($cart->count() > 0) {
             $sub_total = $cart->sum(function ($item) {
                 return $item->pivot->qnty * $item->pivot->purchase_price;
@@ -145,7 +146,8 @@ class PurchaseCartController extends Controller
             'prev_balance',
             'salesreturns',
             'total',
-            'printUrl'
+            'printUrl',
+            'supplier_id'
         ));
     }
 
