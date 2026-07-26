@@ -32,52 +32,54 @@
 
         @if($purchase_return)
             <div class="row">
-                <div class="col-md-4"><b>Invoice No: </b> {{$purchase_return->purchase ? $purchase_return->purchase->invoice_no : ''}}</div>
-                <div class="col-md-4"><b>Supplier: </b> {{$purchase_return->supplier ? $purchase_return->supplier->first_name . ' ' . $purchase_return->supplier->last_name : ''}}</div>
-                <div class="col-md-4"><b>Total items:</b> {{number_format($purchase_return->total_qnty,0) }}</div>
-                <div class="col-md-4"><b>Total Amount:</b> {{$purchase_return->total_amount }}</div>
-                <div class="col-md-4"><b>Return Amount:</b> {{$purchase_return->return_amount }}</div>
-                <div class="col-md-4"></div>
+                <div class="col-md-4 mb-2"><b>Invoice No: </b> {{$purchase_return->purchase ? $purchase_return->purchase->invoice_no : ''}}</div>
+                <div class="col-md-4 mb-2"><b>Supplier: </b> {{ $purchase_return->supplier ? trim($purchase_return->supplier->first_name . ' ' . $purchase_return->supplier->last_name) : 'N/A' }}</div>
+                <div class="col-md-4 mb-2"><b>Total Items:</b> {{ number_format($purchase_return->total_qnty, 0) }}</div>
+                <div class="col-md-4 mb-2"><b>Total Amount:</b> {{ config('settings.currency_symbol') }} {{ number_format($purchase_return->total_amount, 2) }}</div>
+                <div class="col-md-4 mb-2 text-danger"><b>Return Amount:</b> {{ config('settings.currency_symbol') }} {{ number_format($purchase_return->return_amount, 2) }}</div>
             </div>
         @endif
 
         <hr>
 
-        <table class="table">
+        <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>{{ 'ID' }}</th>
-                    <th>{{ 'Product' }}</th>
-                    <th>{{ 'Rate' }}</th>
-                    <th>{{ 'Return Qnty.' }}</th>
-                    <th>{{ 'Total' }}</th>
-                    <th>{{ 'Created' }}</th>
-
+                    <th>#</th>
+                    <th>Image</th>
+                    <th>Product</th>
+                    <th>Purchase Rate</th>
+                    <th>Return Qty</th>
+                    <th>Total</th>
+                    <th>Date</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($purchase_return->items as $item)
                 <tr>
-
-                    <td>{{$item->id}}</td>
-                    <td><img class="product-img" src="{{ Storage::url($item->product->image) }}" alt="" style="width:75px;height:75px"></td>
-                    <td>{{$item->product->name}}</td>
-                    <td>{{$item->purchase_price}}</td>
-                    <td>{{number_format($item->qnty)}}</td>
-                    <td>{{$item->total_price ?? ($item->purchase_price * $item->qnty)}}</td>
-                    <td>{{$item->created_at}}</td>
-
+                    <td>{{ $loop->iteration }}</td>
+                    <td>
+                        @if($item->product)
+                            <img class="product-img" src="{{ $item->product->image ? asset('public/' . $item->product->image) : asset('images/img-placeholder.jpg') }}" 
+                                 onerror="this.onerror=null; this.src='{{ asset('images/img-placeholder.jpg') }}';" 
+                                 alt="{{ $item->product->name }}" 
+                                 style="width:60px;height:60px;object-fit:cover;border-radius:4px">
+                        @else
+                            <img class="product-img" src="{{ asset('images/img-placeholder.jpg') }}" alt="" style="width:60px;height:60px;object-fit:cover;border-radius:4px">
+                        @endif
+                    </td>
+                    <td>{{ $item->product->name ?? 'Deleted Product' }}</td>
+                    <td>{{ config('settings.currency_symbol') }} {{ number_format($item->purchase_price, 2) }}</td>
+                    <td>{{ number_format($item->qnty, 0) }}</td>
+                    <td>{{ config('settings.currency_symbol') }} {{ number_format($item->total_price ?? ($item->purchase_price * $item->qnty), 2) }}</td>
+                    <td>{{ $item->created_at->format('d M Y, h:i A') }}</td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <th></th>
-                    <th></th>
-                    <th>{{ config('settings.currency_symbol') }} {{ number_format($total, 2) }}</th>
-                    <th>{{ config('settings.currency_symbol') }} {{ number_format($total, 2) }}</th>
-                    <th></th>
-                    <th></th>
+                    <th colspan="5" class="text-right">Grand Total</th>
+                    <th>{{ config('settings.currency_symbol') }} {{ number_format($purchase_return->items->sum(function($i){ return $i->total_price ?? ($i->purchase_price * $i->qnty); }), 2) }}</th>
                     <th></th>
                 </tr>
             </tfoot>

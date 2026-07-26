@@ -137,6 +137,12 @@ class SaleController extends Controller
                     $stock->quantity -= $item->pivot->quantity;
                     $stock->save();
                 }
+
+                // Update global product stock
+                if ($product) {
+                    $product->quantity -= $item->pivot->quantity;
+                    $product->save();
+                }
             }
 
             // Update the order with calculated values

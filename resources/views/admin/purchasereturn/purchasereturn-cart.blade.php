@@ -185,13 +185,13 @@
                          data-name="{{ $product->name }}"
                          data-barcode="{{ $product->barcode }}"
                          data-purchase-price="{{ $product->purchase_price ?? 0 }}"
-                         data-quantity="{{ $product->quantity ?? 0 }}"
+                         data-quantity="{{ $product->real_stock ?? 0 }}"
                          onclick="addToCart({{ $product->id }})">
                         <div class="d-flex justify-content-between">
                             <span>{{ $product->name }}</span>
                             <span class="text-muted">{{ config('settings.currency_symbol', '৳') }} {{ number_format($product->purchase_price ?? 0, 2) }}</span>
                         </div>
-                        <small class="text-muted">Stock: {{ $product->quantity ?? 0 }}</small>
+                        <small class="text-muted">Stock: {{ $product->real_stock ?? 0 }}</small>
                     </div>
                     @endforeach
                 </div>
@@ -267,7 +267,8 @@ function findPurchaseID() {
                         purchase_price: item.purchase_price,
                         total_price: item.total_price,
                         purchase_id: item.purchase_id,
-                        supplier_id: item.supplier_id
+                        supplier_id: item.supplier_id,
+                        branch_id: item.branch_id ?? null
                     }));
                     renderCart();
                     calculateTotals();

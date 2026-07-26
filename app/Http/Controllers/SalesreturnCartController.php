@@ -14,7 +14,7 @@ class SalesreturnCartController extends Controller
         if ($request->wantsJson()) {
 
             return response(
-                $request->user()->cart->each(function ($product) {
+                $request->user()->salesreturnCart->each(function ($product) {
                     $customer = Customer::find($product->pivot->customer_id);
                     $product->pivot->user_balance = $customer?->balance ?? 0;
                 })
@@ -26,7 +26,7 @@ class SalesreturnCartController extends Controller
         $customers = Customer::get();
 
         // Get current cart
-        $cart = $request->user()->cart()->get();
+        $cart = $request->user()->salesreturnCart()->get();
 
         // Calculate totals
         $sub_total = 0;
@@ -39,8 +39,16 @@ class SalesreturnCartController extends Controller
 
         if ($cart->count() > 0) {
             $sub_total = $cart->sum(function ($item) {
-                return $item->pivot->quantity * $item->pivot->sell_price;
+                return $item->pivot->qnty * $item->pivot->sell_price;
             });
+
+            $order_id = $cart[0]->pivot->order_id ?? null;
+            if ($order_id) {
+                $order = \App\Models\Sale::find($order_id);
+                if ($order) {
+                    $discount_amount = $order->discount_amount;
+                }
+            }
 
             $gr_total = $sub_total - $discount_amount;
 
@@ -54,6 +62,9 @@ class SalesreturnCartController extends Controller
                     $last_balance = $new_balance + $return_amount;
                 }
             }
+        } else {
+            $customer_id = null;
+            $order_id = null;
         }
 
         $total = 0;
@@ -73,7 +84,9 @@ class SalesreturnCartController extends Controller
             'last_balance',
             'prev_balance',
             'total',
-            'printUrl'
+            'printUrl',
+            'customer_id',
+            'order_id'
         ));
     }
 
@@ -87,16 +100,16 @@ class SalesreturnCartController extends Controller
         $customer_id = $request->customer_id;
 
         $product = Product::where('barcode', $barcode)->first();
-        $cart = $request->user()->cart()->where('barcode', $barcode)->first();
+        $cart = $request->user()->salesreturnCart()->where('barcode', $barcode)->first();
         if ($cart) {
             // check product quantity
-            if ($product->quantity <= $cart->pivot->quantity) {
+            if ($product->quantity <= $cart->pivot->qnty) {
                 return response([
                     'message' => __('cart.available', ['quantity' => $product->quantity]),
                 ], 400);
             }
             // update only quantity
-            $cart->pivot->quantity = $cart->pivot->quantity + 1;
+            $cart->pivot->qnty = $cart->pivot->qnty + 1;
             $cart->pivot->save();
         } else {
             if ($product->quantity < 1) {
@@ -104,7 +117,7 @@ class SalesreturnCartController extends Controller
                     'message' => __('cart.outstock'),
                 ], 400);
             }
-            $request->user()->cart()->attach($product->id, ['quantity' => 1, 'customer_id' => $customer_id, 'sell_price' => $product->sell_price]);
+            $request->user()->salesreturnCart()->attach($product->id, ['qnty' => 1, 'customer_id' => $customer_id, 'sell_price' => $product->sell_price]);
         }
 
         return response('', 204);
@@ -119,7 +132,7 @@ class SalesreturnCartController extends Controller
 
         try {
             $product = Product::find($request->product_id);
-            $cart = $request->user()->cart()->where('id', $request->product_id)->first();
+            $cart = $request->user()->salesreturnCart()->where('product_id', $request->product_id)->first();
 
             if (!$cart) {
                 return response([
@@ -136,7 +149,7 @@ class SalesreturnCartController extends Controller
                 ], 400);
             }
 
-            $cart->pivot->quantity = $request->quantity;
+            $cart->pivot->qnty = $request->quantity;
 
             try {
                 $result = $cart->pivot->save();
@@ -174,7 +187,7 @@ class SalesreturnCartController extends Controller
         ]);
 
         try {
-            $cart = $request->user()->cart()->where('id', $request->product_id)->first();
+            $cart = $request->user()->salesreturnCart()->where('product_id', $request->product_id)->first();
 
             if (!$cart) {
                 return response([
@@ -184,13 +197,14 @@ class SalesreturnCartController extends Controller
             }
 
             $cart->pivot->sell_price = $request->sell_price;
+            $cart->pivot->total_price = $request->sell_price * $cart->pivot->qnty;
 
             try {
                 $result = $cart->pivot->save();
                 if (!$result) {
                     return response([
                         'success' => false,
-                        'message' => 'Failed to update sell price in database - save returned false',
+                        'message' => 'Failed to update price in database',
                     ], 500);
                 }
             } catch (\Illuminate\Database\QueryException $e) {
@@ -202,13 +216,13 @@ class SalesreturnCartController extends Controller
 
             return response([
                 'success' => true,
-                'message' => 'Sell price updated successfully'
+                'message' => 'Price updated successfully'
             ]);
 
         } catch (\Exception $e) {
             return response([
                 'success' => false,
-                'message' => 'General error: ' . $e->getMessage(),
+                'message' => 'An unexpected error occurred: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -218,14 +232,14 @@ class SalesreturnCartController extends Controller
         $request->validate([
             'product_id' => 'required|integer|exists:products,id'
         ]);
-        $request->user()->cart()->detach($request->product_id);
+        $request->user()->salesreturnCart()->detach($request->product_id);
 
         return response('', 204);
     }
 
     public function empty(Request $request)
     {
-        $request->user()->cart()->detach();
+        $request->user()->salesreturnCart()->detach();
 
         return response('', 204);
     }

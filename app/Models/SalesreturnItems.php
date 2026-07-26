@@ -14,6 +14,7 @@ class SalesreturnItems extends Model
         'purchase_price',
         'sell_price',
         'qnty',
+        'total_price',
         'customer_id',
         'user_id',
         'branch_id',

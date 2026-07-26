@@ -153,7 +153,7 @@ class PurchaseController extends Controller
         $paid_amount = 0;
 
         foreach ($cart as $item) {
-            $product = Product::where('id', $item->product_id)->first();
+            $product = Product::where('id', $item->id)->first();
             $purchase->items()->create([
                 'purchase_price' => $item->pivot->purchase_price,
                 'quantity' => $item->pivot->qnty,
@@ -167,6 +167,13 @@ class PurchaseController extends Controller
             ]);
             $stock->quantity += $item->pivot->qnty;
             $stock->save();
+
+            // Update global product stock
+            if ($product) {
+                $product->quantity += $item->pivot->qnty;
+                $product->save();
+            }
+
             $sub_total += $item->pivot->qnty * $item->pivot->purchase_price;
         }
 

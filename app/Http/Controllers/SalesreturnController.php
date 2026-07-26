@@ -25,7 +25,7 @@ class SalesreturnController extends Controller
         $customers = $customers->get();
 
         // Get current cart with customer relationship
-        $cart = $request->user()->cart()->with(['customer'])->get();
+        $cart = $request->user()->salesreturnCart()->with(['customer'])->get();
 
         // Calculate totals
         $sub_total = 0;
@@ -41,6 +41,14 @@ class SalesreturnController extends Controller
                 return $item->pivot->qnty * $item->pivot->sell_price;
             });
 
+            $order_id = $cart[0]->pivot->order_id ?? null;
+            if ($order_id) {
+                $order = \App\Models\Sale::find($order_id);
+                if ($order) {
+                    $discount_amount = $order->discount_amount;
+                }
+            }
+
             $gr_total = $sub_total - $discount_amount;
 
             $customer_id = $cart[0]->pivot->customer_id ?? null;
@@ -53,6 +61,9 @@ class SalesreturnController extends Controller
                     $last_balance = $new_balance + $return_amount;
                 }
             }
+        } else {
+            $customer_id = null;
+            $order_id = null;
         }
 
         $total = 0;
@@ -72,7 +83,9 @@ class SalesreturnController extends Controller
             'last_balance',
             'prev_balance',
             'total',
-            'printUrl'
+            'printUrl',
+            'customer_id',
+            'order_id'
         ));
     }
 
@@ -107,13 +120,17 @@ class SalesreturnController extends Controller
             $items = $order->items;
             SalesreturnItemCart::truncate();
             foreach ($items as $item) {
+                $quantity = $item->quantity > 0 ? $item->quantity : 1;
+                // SaleController stores sell_price as (unit_price * qty), so recover unit price
+                $unit_price = $item->sell_price / $quantity;
+
                 $data = [
                     'purchase_price' => $item->purchase_price ?? 0,
-                    'total_price' => $item->sell_price * $item->quantity,
-                    'sell_price' => $item->sell_price,
-                    'qnty' => $item->quantity,
+                    'total_price' => $item->sell_price, // already total
+                    'sell_price' => $unit_price,
+                    'qnty' => $quantity,
                     'product_id' => $item->product_id,
-                    'order_id' => $order_id, // Use the sale ID as order_id
+                    'order_id' => $order_id,
                     'customer_id' => $order->customer_id,
                     'user_id' => Auth::user()->id,
                     'branch_id' => Auth::user()->branch_id,
@@ -169,8 +186,8 @@ class SalesreturnController extends Controller
         \Log::info('finalSave called with data: ', $request->all());
 
         try {
-            // Get cart items from user_cart table
-            $cart_items = $request->user()->cart()->where('customer_id', $request->customer_id)->get();
+            // Get cart items from salesreturn_item_carts table
+            $cart_items = $request->user()->salesreturnCart()->where('customer_id', $request->customer_id)->get();
 
             \Log::info('Cart items found: ' . $cart_items->count());
 
@@ -178,10 +195,12 @@ class SalesreturnController extends Controller
                 \Log::info('Processing cart items for sales return');
 
                 $total_price = $cart_items->sum(function($item) {
-                    return $item->pivot->quantity * $item->pivot->sell_price;
+                    return $item->pivot->qnty * $item->pivot->sell_price;
                 });
+                $discount_amount = floatval($request->discount_amount ?? 0);
+                $discounted_total = $total_price - $discount_amount;
                 $return_amount = $request->amount;
-                $profit_amount = $total_price - $return_amount;
+                $profit_amount = $discounted_total - $return_amount;
 
                 \Log::info('Creating sales return with data: ', [
                     'customer_id' => $request->customer_id,
@@ -193,9 +212,9 @@ class SalesreturnController extends Controller
                 $salesreturn = Salesreturn::create([
                     'customer_id' => $request->customer_id,
                     'user_id' => Auth::user()->id,
-                    'order_id' => null,
+                    'order_id' => $cart_items[0]->pivot->order_id ?? null,
                     'total_qnty' => $cart_items->sum(function($item) {
-                        return $item->pivot->quantity;
+                        return $item->pivot->qnty;
                     }),
                     'total_amount' => $total_price,
                     'return_amount' => $return_amount,
@@ -208,11 +227,12 @@ class SalesreturnController extends Controller
                 foreach ($cart_items as $item) {
                     $data = [
                         'salesreturn_id' => $salesreturn->id,
-                        'order_id' => null,
+                        'order_id' => $item->pivot->order_id ?? null,
                         'product_id' => $item->id,
                         'purchase_price' => $item->purchase_price ?? 0,
                         'sell_price' => $item->pivot->sell_price,
-                        'qnty' => $item->pivot->quantity,
+                        'qnty' => $item->pivot->qnty,
+                        'total_price' => $item->pivot->sell_price * $item->pivot->qnty,
                         'customer_id' => $item->pivot->customer_id,
                         'user_id' => Auth::user()->id,
                         'branch_id' => Auth::user()->branch_id,
@@ -223,7 +243,7 @@ class SalesreturnController extends Controller
                     // Update product stock
                     $product = Product::find($item->id);
                     if ($product) {
-                        $product->quantity += $item->pivot->quantity;
+                        $product->quantity += $item->pivot->qnty;
                         $product->save();
                     }
 
@@ -232,7 +252,7 @@ class SalesreturnController extends Controller
                         'product_id' => $item->id,
                         'branch_id' => Auth::user()->branch_id,
                     ]);
-                    $stock->quantity += $item->pivot->quantity;
+                    $stock->quantity += $item->pivot->qnty;
                     $stock->save();
                 }
 
@@ -242,8 +262,8 @@ class SalesreturnController extends Controller
                     $customer->save();
                 }
 
-                // Clear the user cart
-                $request->user()->cart()->detach();
+                // Empty the return cart
+                $request->user()->salesreturnCart()->detach();
 
                 return response([
                     'success' => true,

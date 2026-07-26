@@ -8,7 +8,6 @@
 @section('content')
 
 <div class="card">
-
     <div class="card-body">
         <div class="row">
             <div class="col-md-6"></div>
@@ -32,52 +31,67 @@
 
         @if($salesreturns)
             <div class="row">
-                <div class="col-md-4"><b>Order id: </b> {{$salesreturns[0]->order_id }}</div>
-                <div class="col-md-4"><b>Customer: </b> {{$salesreturns[0]->customer->first_name }}</div>
-                <div class="col-md-4"><b>Total items:</b> {{number_format($salesreturns[0]->total_qnty,0) }}</div>
-                <div class="col-md-4"><b>Total Amount:</b> {{$salesreturns[0]->total_amount }}</div>
-                <div class="col-md-4"><b>Return Amount:</b> {{$salesreturns[0]->return_amount }}</div>
-                <div class="col-md-4"></div>
+                <div class="col-md-4 mb-2"><b>Order ID: </b> {{$salesreturns[0]->order_id }}</div>
+                <div class="col-md-4 mb-2"><b>Customer: </b> {{ $salesreturns[0]->getCustomerName() }}</div>
+                <div class="col-md-4 mb-2"><b>Total Items:</b> {{ number_format($salesreturns[0]->total_qnty, 0) }}</div>
+                
+                <div class="col-md-4 mb-2"><b>Total Amount:</b> {{ config('settings.currency_symbol') }} {{ number_format($salesreturns[0]->total_amount, 2) }}</div>
+                <div class="col-md-4 mb-2 text-danger"><b>Return Amount:</b> {{ config('settings.currency_symbol') }} {{ number_format($salesreturns[0]->return_amount, 2) }}</div>
+                <div class="col-md-4 mb-2 text-success"><b>Profit Retained:</b> {{ config('settings.currency_symbol') }} {{ number_format($salesreturns[0]->profit_amount, 2) }}</div>
+                
+                @if($salesreturns[0]->order_id)
+                    @php
+                        $original_order = \App\Models\Sale::find($salesreturns[0]->order_id);
+                    @endphp
+                    @if($original_order && $original_order->discount_amount > 0)
+                        <div class="col-md-12 mt-2 alert alert-warning">
+                            <i class="fas fa-info-circle"></i> <b>Note:</b> The original sale (Order #{{ $salesreturns[0]->order_id }}) had a discount of <strong>{{ config('settings.currency_symbol') }} {{ number_format($original_order->discount_amount, 2) }}</strong> applied to it.
+                        </div>
+                    @endif
+                @endif
             </div>
         @endif
 
         <hr>
 
-        <table class="table">
+        <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>{{ 'ID' }}</th>
-                    <th>{{ 'Product' }}</th>
-                    <th>{{ 'Rate' }}</th>
-                    <th>{{ 'Return Qnty.' }}</th>
-                    <th>{{ 'Total' }}</th>
-                    <th>{{ 'Created' }}</th>
-
+                    <th>#</th>
+                    <th>Image</th>
+                    <th>Product</th>
+                    <th>Sell Rate</th>
+                    <th>Return Qty</th>
+                    <th>Total</th>
+                    <th>Date</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($salesreturns[0]->items as $salesreturn)
+                @foreach ($salesreturns[0]->items as $item)
                 <tr>
-
-                    <td>{{$salesreturn->id}}</td>
-                    <td><img class="product-img" src="{{ Storage::url($salesreturn->product->image) }}" alt="" style="width:75px;height:75px"></td>
-                    <td>{{$salesreturn->product->name}}</td>
-                    <td>{{$salesreturn->sell_price}}</td>
-                    <td>{{number_format($salesreturn->qnty)}}</td>
-                    <td>{{$salesreturn->total_price}}</td>
-                    <td>{{$salesreturn->created_at}}</td>
-
+                    <td>{{ $loop->iteration }}</td>
+                    <td>
+                        @if($item->product)
+                            <img src="{{ $item->product->image ? asset('public/' . $item->product->image) : asset('images/img-placeholder.jpg') }}" 
+                                 onerror="this.onerror=null; this.src='{{ asset('images/img-placeholder.jpg') }}';" 
+                                 alt="{{ $item->product->name }}" 
+                                 style="width:60px;height:60px;object-fit:cover;border-radius:4px">
+                        @else
+                            <span class="text-muted">N/A</span>
+                        @endif
+                    </td>
+                    <td>{{ $item->product->name ?? 'Deleted Product' }}</td>
+                    <td>{{ config('settings.currency_symbol') }} {{ number_format($item->sell_price, 2) }}</td>
+                    <td>{{ number_format($item->qnty, 0) }}</td>
+                    <td>{{ config('settings.currency_symbol') }} {{ number_format($item->sell_price * $item->qnty, 2) }}</td>
+                    <td>{{ $item->created_at->format('d M Y, h:i A') }}</td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <th></th>
-                    <th></th>
-                    <th>{{ config('settings.currency_symbol') }} {{ number_format($total, 2) }}</th>
-                    <th>{{ config('settings.currency_symbol') }} {{ number_format($total, 2) }}</th>
-                    <th></th>
-                    <th></th>
+                    <th colspan="5" class="text-right">Grand Total</th>
+                    <th>{{ config('settings.currency_symbol') }} {{ number_format($salesreturns[0]->items->sum(function($i){ return $i->sell_price * $i->qnty; }), 2) }}</th>
                     <th></th>
                 </tr>
             </tfoot>

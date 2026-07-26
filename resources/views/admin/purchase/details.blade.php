@@ -22,13 +22,12 @@
 
         @if($purchase)
             <div class="row">
-                <div class="col-md-4"><b>Invoice no: </b> {{$purchase->invoice_no }}</div>
-                <div class="col-md-4"><b>Supplier: </b> {{$purchase->supplier?$purchase->supplier->first_name:'' }}</div>
-                <div class="col-md-4"><b>Sub Total:</b> {{number_format($purchase->sub_total,0) }}</div>
-                <div class="col-md-4"><b>Discount:</b> {{$purchase->discount_amount }}</div>
-                <div class="col-md-4"><b>Gr. Amount:</b> {{$purchase->gr_total }}</div>
-                <div class="col-md-4"><b>Paid Amount:</b> {{$purchase->paid_amount }}</div>
-                <div class="col-md-4"></div>
+                <div class="col-md-4 mb-2"><b>Invoice No: </b> {{$purchase->invoice_no }}</div>
+                <div class="col-md-4 mb-2"><b>Supplier: </b> {{ $purchase->supplier ? trim($purchase->supplier->first_name . ' ' . $purchase->supplier->last_name) : 'N/A' }}</div>
+                <div class="col-md-4 mb-2"><b>Sub Total:</b> {{ config('settings.currency_symbol') }} {{ number_format($purchase->sub_total, 2) }}</div>
+                <div class="col-md-4 mb-2 text-warning"><b>Discount:</b> {{ config('settings.currency_symbol') }} {{ number_format($purchase->discount_amount, 2) }}</div>
+                <div class="col-md-4 mb-2"><b>Grand Total:</b> {{ config('settings.currency_symbol') }} {{ number_format($purchase->gr_total, 2) }}</div>
+                <div class="col-md-4 mb-2 text-success"><b>Paid Amount:</b> {{ config('settings.currency_symbol') }} {{ number_format($purchase->paid_amount, 2) }}</div>
             </div>
         @endif
 
@@ -53,7 +52,13 @@
                 <tr>
                     <td>{{$loop->index+1}}</td>
                     <td>
-                        <img class="product-img" src="{{ $purchase_item->product ? $purchase_item->product->image_url : asset('images/img-placeholder.jpg') }}" alt="" style="width:55px;height:55px">
+                        @if($purchase_item->product)
+                            <img class="product-img" src="{{ $purchase_item->product->image ? asset('public/' . $purchase_item->product->image) : asset('images/img-placeholder.jpg') }}" 
+                                 onerror="this.onerror=null; this.src='{{ asset('images/img-placeholder.jpg') }}';" 
+                                 alt="" style="width:55px;height:55px;object-fit:cover;border-radius:4px">
+                        @else
+                            <img class="product-img" src="{{ asset('images/img-placeholder.jpg') }}" alt="" style="width:55px;height:55px;object-fit:cover;border-radius:4px">
+                        @endif
                         {{$purchase_item->product->name ?? '-'}}
                     </td>
                     <td>{{$purchase_item->branch ? $purchase_item->branch->branch_name : '-'}}</td>

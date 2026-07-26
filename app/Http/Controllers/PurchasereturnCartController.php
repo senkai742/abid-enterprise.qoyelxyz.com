@@ -17,7 +17,13 @@ class PurchasereturnCartController extends Controller
     public function index(Request $request)
     {
         $suppliers = Supplier::all();
-        $products = Product::all();
+        $products = Product::with('branchStocks')->get();
+
+        // Annotate each product with real total stock from branch_product_stocks
+        $products->each(function ($product) {
+            $product->real_stock = $product->branchStocks->sum('quantity');
+        });
+
         $purchases = Purchase::with(['supplier', 'items'])->latest()->take(50)->get();
 
         $viewPath = auth()->user()->role === 'admin' ? 'admin.purchasereturn.purchasereturn-cart' : 'user.purchasereturn.purchasereturn-cart';
@@ -69,14 +75,24 @@ class PurchasereturnCartController extends Controller
                 'branch_id' => $user->branch_id,
             ]);
 
-            // Create purchase return items
+            // Create purchase return items and update stock
             foreach ($items as $item) {
                 $product = Product::find($item['product_id']);
 
-                // Update product quantity
+                // Returning to supplier = REMOVE from our stock
                 if ($product) {
-                    $product->quantity = $product->quantity + $item['qnty'];
+                    $product->quantity = max(0, $product->quantity - $item['qnty']);
                     $product->save();
+                }
+
+                // Also deduct from branch stock (use the branch stored on the cart item, or fallback to user branch)
+                $branchId = !empty($item['branch_id']) ? $item['branch_id'] : $user->branch_id;
+                $stock = \App\Models\BranchProductStock::where('product_id', $item['product_id'])
+                    ->where('branch_id', $branchId)
+                    ->first();
+                if ($stock) {
+                    $stock->quantity = max(0, $stock->quantity - $item['qnty']);
+                    $stock->save();
                 }
 
                 PurchaseReturnItems::create([
@@ -88,7 +104,7 @@ class PurchasereturnCartController extends Controller
                     'supplier_id' => !empty($item['supplier_id']) ? $item['supplier_id'] : $supplierId,
                     'user_id' => $user->id,
                     'company_id' => $user->company_id,
-                    'branch_id' => $user->branch_id,
+                    'branch_id' => $branchId,
                 ]);
             }
 

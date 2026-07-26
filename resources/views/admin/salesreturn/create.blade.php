@@ -41,7 +41,8 @@
                        id="order_id"
                        name="order_id"
                        placeholder="Order ID"
-                       class="form-control">
+                       class="form-control"
+                       value="{{ $order_id ?? '' }}">
                 <button type="button" class="btn btn-info btn-sm mt-1" onclick="findOrderID()">
                     Find Order
                 </button>
@@ -52,6 +53,7 @@
                     <option value="">Select a customer</option>
                     @foreach($customers as $customer)
                     <option value="{{ $customer->id }}"
+                            {{ (isset($customer_id) && $customer_id == $customer->id) ? 'selected' : '' }}
                             data-balance="{{ $customer->balance }}"
                             data-first-name="{{ $customer->first_name }}"
                             data-last-name="{{ $customer->last_name }}"
@@ -103,7 +105,8 @@
                                         <input type="text"
                                                class="form-control form-control-sm qty-input"
                                                value="{{ $item->pivot->qnty }}"
-                                               onchange="updateQuantity({{ $item->id }}, this.value)">
+                                               onclick="console.log('Quantity input clicked')"
+                                               onblur="updateQuantity({{ $item->id }}, this.value)">
                                     </td>
                                     <td width="120px">
                                         <div class="input-group input-group-sm mb-1">

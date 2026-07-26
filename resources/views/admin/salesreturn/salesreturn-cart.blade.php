@@ -41,7 +41,8 @@
                        id="order_id"
                        name="order_id"
                        placeholder="Order ID"
-                       class="form-control">
+                       class="form-control"
+                       value="{{ $order_id ?? '' }}">
                 <button type="button" class="btn btn-info btn-sm mt-1" onclick="findOrderID()">
                     Find Order
                 </button>
@@ -52,6 +53,7 @@
                     <option value="">Select a customer</option>
                     @foreach($customers as $customer)
                     <option value="{{ $customer->id }}"
+                            {{ (isset($customer_id) && $customer_id == $customer->id) ? 'selected' : '' }}
                             data-balance="{{ $customer->balance }}"
                             data-first-name="{{ $customer->first_name }}"
                             data-last-name="{{ $customer->last_name }}"
@@ -102,7 +104,7 @@
                                     <td>
                                         <input type="text"
                                                class="form-control form-control-sm qty-input"
-                                               value="{{ $item->pivot->quantity }}"
+                                               value="{{ $item->pivot->qnty }}"
                                                onclick="console.log('Quantity input clicked')"
                                                onblur="updateQuantity({{ $item->id }}, this.value)">
                                     </td>
@@ -120,7 +122,7 @@
                                         </div>
                                     </td>
                                     <td class="text-right">
-                                        {{ config('settings.currency_symbol', '৳') }} {{ number_format($item->pivot->sell_price * $item->pivot->quantity, 2) }}
+                                        {{ config('settings.currency_symbol', '৳') }} {{ number_format($item->pivot->sell_price * $item->pivot->qnty, 2) }}
                                     </td>
                                     <td>
                                         <button class="btn btn-danger btn-sm"

@@ -61,6 +61,14 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function salesreturnCart()
+    {
+        return $this->belongsToMany(Product::class, 'salesreturn_item_carts', 'user_id', 'product_id')
+            ->withPivot('id', 'qnty', 'sell_price', 'total_price', 'order_id', 'customer_id', 'branch_id', 'company_id')
+            ->withTimestamps();
+    }
+
+
     public function getFullname()
     {
         return $this->first_name . ' ' . $this->last_name;

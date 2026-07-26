@@ -54,9 +54,9 @@ class PurchasereturnController extends Controller
             foreach ($items as $item) {
                 $data = [
                     'purchase_price' => $item->purchase_price,
-                    'total_price' => $item->purchase_price * $item->qnty,
-                    'sell_price' => $item->sell_price,
-                    'qnty' => $item->qnty,
+                    'total_price' => $item->purchase_price * $item->quantity,
+                    'sell_price' => $item->sell_price ?? 0,
+                    'qnty' => $item->quantity,
                     'product_id' => $item->product_id,
                     'purchase_id' => $purchase_id, // ensure purchase_id is set
                     'supplier_id' => $purchase->supplier_id,
@@ -175,6 +175,13 @@ class PurchasereturnController extends Controller
                     ]);
                     $stock->quantity -= $item->qnty;
                     $stock->save();
+
+                    // Update global product stock
+                    $product = \App\Models\Product::find($item->product_id);
+                    if ($product) {
+                        $product->quantity -= $item->qnty;
+                        $product->save();
+                    }
                 }
 
 

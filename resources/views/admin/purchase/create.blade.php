@@ -307,12 +307,26 @@ let currentLastBalance = {{ $last_balance }};
 
 // Initialize
 $(document).ready(function() {
+    // Restore preserved inputs
+    if (sessionStorage.getItem('purchase_supplier_invoice_no')) {
+        $('#supplier_invoice_no').val(sessionStorage.getItem('purchase_supplier_invoice_no'));
+    }
+    if (sessionStorage.getItem('purchase_supplier_id') && !$('#supplier_id').val()) {
+        $('#supplier_id').val(sessionStorage.getItem('purchase_supplier_id'));
+    }
+
     updateSupplierInfo();
     calculateTotals();
 });
 
+// Preserve inputs on change
+$('#supplier_invoice_no').on('input', function() {
+    sessionStorage.setItem('purchase_supplier_invoice_no', $(this).val());
+});
+
 // Supplier selection
 $('#supplier_id').change(function() {
+    sessionStorage.setItem('purchase_supplier_id', $(this).val());
     updateSupplierInfo();
 });
 
@@ -475,6 +489,8 @@ function emptyCart() {
             _token: '{{ csrf_token() }}'
         },
         success: function(response) {
+            sessionStorage.removeItem('purchase_supplier_invoice_no');
+            sessionStorage.removeItem('purchase_supplier_id');
             location.reload(); // Reload to update cart
         },
         error: function(xhr) {
@@ -553,6 +569,8 @@ function submitPurchase() {
                     _token: '{{ csrf_token() }}'
                 },
                 success: function(response) {
+                    sessionStorage.removeItem('purchase_supplier_invoice_no');
+                    sessionStorage.removeItem('purchase_supplier_id');
                     Swal.fire("Success", "Purchase has been saved!", "success");
                     setTimeout(() => {
                         window.location.reload();
