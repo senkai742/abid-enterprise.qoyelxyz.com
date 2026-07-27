@@ -59,7 +59,11 @@ class PurchasereturnCartController extends Controller
                 $totalQty += $item['qnty'];
             }
 
-            $profitAmount = $totalPrice - $returnAmount;
+            $discountAmount = floatval($request->discount_amount ?? 0);
+            $netTotal = $totalPrice - $discountAmount;
+            
+            // For accounting, the profit (or difference) is the goods value minus cash returned
+            $profitAmount = $netTotal - $returnAmount;
 
             // Create purchase return record
             $purchaseReturn = PurchaseReturn::create([
@@ -67,13 +71,22 @@ class PurchasereturnCartController extends Controller
                 'user_id' => $user->id,
                 'purchase_id' => $purchaseId,
                 'total_qnty' => $totalQty,
-                'total_amount' => $totalPrice,
+                'total_amount' => $netTotal, // Saving net total as total amount
                 'return_amount' => $returnAmount,
                 'profit_amount' => $profitAmount,
                 'notes' => $request->notes ?? '',
                 'company_id' => $user->company_id,
                 'branch_id' => $user->branch_id,
             ]);
+
+            // Update Supplier Balance
+            // Net Total reduces our debt (since we gave goods back).
+            // Return Amount (cash they gave us) increases our debt.
+            $supplier = Supplier::find($supplierId);
+            if ($supplier) {
+                $supplier->balance -= ($netTotal - $returnAmount);
+                $supplier->save();
+            }
 
             // Create purchase return items and update stock
             foreach ($items as $item) {

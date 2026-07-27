@@ -111,23 +111,35 @@
         </div>
 
         <!-- Totals -->
-        <div class="row">
+        <div class="row mt-2">
             <div class="col">
                 <div class="font-weight-bold">Sub. Total</div>
                 {{ config('settings.currency_symbol', '৳') }} <span id="sub_total">0.00</span>
             </div>
             <div class="col">
-                <div class="font-weight-bold">Return Amount</div>
-                <input type="text"
-                       id="return_amount"
-                       placeholder="Return amount"
+                <div class="font-weight-bold">Discount</div>
+                <input type="number"
+                       id="discount_amount"
+                       placeholder="Supplier discount"
                        class="form-control form-sm text-right"
                        value="0"
-                       onchange="calculateTotals()">
+                       min="0"
+                       oninput="calculateTotals()">
+            </div>
+            <div class="col">
+                <div class="font-weight-bold">Return Amount</div>
+                <input type="number"
+                       id="return_amount"
+                       placeholder="Cash to return"
+                       class="form-control form-sm text-right"
+                       value="0"
+                       min="0"
+                       oninput="calculateTotals()">
             </div>
             <div class="col text-right">
-                <div class="font-weight-bold">Total</div>
-                <div>{{ config('settings.currency_symbol', '৳') }} <span id="gr_total">0.00</span></div>
+                <div class="font-weight-bold">Net Total</div>
+                <div class="font-weight-bold text-danger">{{ config('settings.currency_symbol', '৳') }} <span id="gr_total">0.00</span></div>
+                <small class="text-muted">(Sub Total - Discount)</small>
             </div>
         </div>
 
@@ -245,10 +257,10 @@ function findPurchaseID() {
     }
 
     fetch(`/admin/purchasereturn/findpurchaseid/${purchaseId}`)
-        .then(response => response.json())
-        .then(data => {
+        .then(response => response.json().then(data => ({ status: response.status, data })))
+        .then(({ status, data }) => {
             if (data.error) {
-                Swal.fire('Error!', data.error, 'error');
+                Swal.fire('Notice', data.error, status === 422 ? 'info' : 'error');
             } else if (data.purchase) {
                 // Set supplier
                 document.getElementById('supplier_id').value = data.purchase.supplier_id;
@@ -264,12 +276,21 @@ function findPurchaseID() {
                         product_id: item.product_id,
                         product_name: item.product ? item.product.name : 'Unknown',
                         qnty: item.qnty,
+                        max_qnty: item.qnty, // max returnable = remaining after prior returns
                         purchase_price: item.purchase_price,
                         total_price: item.total_price,
                         purchase_id: item.purchase_id,
                         supplier_id: item.supplier_id,
                         branch_id: item.branch_id ?? null
                     }));
+
+                    // Load original discount if present
+                    if (data.purchase && data.purchase.discount_amount) {
+                        document.getElementById('discount_amount').value = data.purchase.discount_amount;
+                    } else {
+                        document.getElementById('discount_amount').value = 0;
+                    }
+
                     renderCart();
                     calculateTotals();
                 }
@@ -368,7 +389,14 @@ function removeFromCart(cartItemId) {
 function updateQuantity(cartItemId, quantity) {
     const item = cart.find(i => i.id === cartItemId);
     if (item) {
-        item.qnty = parseInt(quantity) || 0;
+        let newQty = parseInt(quantity) || 0;
+        const maxQty = item.max_qnty || newQty; // don't exceed what was originally purchaseable
+        if (newQty > maxQty) {
+            Swal.fire('Warning', `You can only return up to ${maxQty} unit(s) for this item.`, 'warning');
+            newQty = maxQty;
+        }
+        if (newQty < 1) newQty = 1;
+        item.qnty = newQty;
         item.total_price = item.qnty * (parseFloat(item.purchase_price) || 0);
         renderCart();
         calculateTotals();
@@ -392,7 +420,9 @@ function renderCart() {
                 <input type="text"
                        class="form-control form-control-sm qty-input"
                        value="${item.qnty}"
+                       max="${item.max_qnty || item.qnty}"
                        onchange="updateQuantity(${item.id}, this.value)">
+                <small class="text-muted">Max: ${item.max_qnty || item.qnty}</small>
             </td>
             <td class="text-right">
                 {{ config('settings.currency_symbol', '৳') }} ${(parseFloat(item.purchase_price) || 0).toFixed(2)}
@@ -412,10 +442,26 @@ function renderCart() {
 // Calculate totals
 function calculateTotals() {
     const subTotal = cart.reduce((sum, item) => sum + (parseFloat(item.total_price) || 0), 0);
+    let discount = parseFloat(document.getElementById('discount_amount').value) || 0;
+    
+    // Don't let discount exceed subtotal
+    if (discount > subTotal) {
+        discount = subTotal;
+        // Optionally update the input field visually if you want to force it
+        // document.getElementById('discount_amount').value = discount; 
+    }
+    
     const returnAmount = parseFloat(document.getElementById('return_amount').value) || 0;
+    const netTotal = subTotal - discount;
 
     document.getElementById('sub_total').textContent = subTotal.toFixed(2);
-    document.getElementById('gr_total').textContent = (subTotal - returnAmount).toFixed(2);
+    document.getElementById('gr_total').textContent = netTotal.toFixed(2);
+
+    // Auto-fill return amount to net total if it's still 0
+    // (don't override if user has typed something)
+    if (returnAmount === 0 && netTotal > 0) {
+        document.getElementById('return_amount').value = netTotal.toFixed(2);
+    }
 }
 
 // Empty cart
@@ -466,6 +512,7 @@ function submitPurchaseReturn() {
     }
 
     const returnAmount = parseFloat(document.getElementById('return_amount').value) || 0;
+    const discountAmount = parseFloat(document.getElementById('discount_amount').value) || 0;
 
     Swal.fire({
         title: 'Confirm Purchase Return',
@@ -481,6 +528,7 @@ function submitPurchaseReturn() {
             formData.append('supplier_id', currentSupplierId);
             formData.append('purchase_id', currentPurchaseId || '');
             formData.append('return_amount', returnAmount);
+            formData.append('discount_amount', discountAmount);
             formData.append('items', JSON.stringify(cart));
 
             fetch('/admin/purchasereturn-cart', {

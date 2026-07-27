@@ -51,24 +51,47 @@ class PurchasereturnController extends Controller
             $items = $purchase->items;
             PurchaseReturnItemCart::truncate();
             $user = auth()->user();
+
+            // Calculate already-returned quantities per product for this purchase
+            $alreadyReturned = PurchaseReturnItems::where('purchase_id', $purchase_id)
+                ->selectRaw('product_id, SUM(qnty) as returned_qty')
+                ->groupBy('product_id')
+                ->pluck('returned_qty', 'product_id');
+
             foreach ($items as $item) {
+                $returnedQty = $alreadyReturned[$item->product_id] ?? 0;
+                $remainingQty = $item->quantity - $returnedQty;
+
+                // Skip items that have already been fully returned
+                if ($remainingQty <= 0) {
+                    continue;
+                }
+
                 $data = [
                     'purchase_price' => $item->purchase_price,
-                    'total_price' => $item->purchase_price * $item->quantity,
+                    'total_price' => $item->purchase_price * $remainingQty,
                     'sell_price' => $item->sell_price ?? 0,
-                    'qnty' => $item->quantity,
+                    'qnty' => $remainingQty,
                     'product_id' => $item->product_id,
-                    'purchase_id' => $purchase_id, // ensure purchase_id is set
+                    'purchase_id' => $purchase_id,
                     'supplier_id' => $purchase->supplier_id,
                     'user_id' => $user->id,
                     'company_id' => $user->company_id,
-                    'branch_id' => $user->branch_id,
+                    'branch_id' => $item->branch_id ?? $user->branch_id,
                 ];
                 PurchaseReturnItemCart::create($data);
             }
-            $purchasereturn_items = PurchaseReturnItemCart::with(['product', 'supplier', 'product'])->get();
+
+            $purchasereturn_items = PurchaseReturnItemCart::with(['product', 'supplier'])->get();
+
+            if ($purchasereturn_items->isEmpty()) {
+                return response()->json(['error' => 'All items from this purchase have already been fully returned.'], 422);
+            }
+
             return response()->json(['purchase' => $purchase, 'purchasereturn_items' => $purchasereturn_items]);
         }
+
+        return response()->json(['error' => 'Purchase not found.'], 404);
     }
 
     public function changeQnty(Request $request)
