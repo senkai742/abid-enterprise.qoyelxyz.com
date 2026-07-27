@@ -14,11 +14,31 @@
                     @csrf
 
                     <div class="form-group">
+                        <label for="branch_id">{{ 'Branch' }}</label>
+                        <select class="form-control" name="branch_id" id="branch_id" onchange="updateStock()" required>
+                            <option value="">:: Select branch ::</option>
+                            @foreach ($branches as $branch)
+                                <option value="{{ $branch->id }}" {{ auth()->user()->branch_id == $branch->id ? 'selected' : '' }}>
+                                    {{ $branch->branch_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('branch_id')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
                         <label for="select-product">{{ 'Product'}}</label>
                         <select onchange="selectProduct(this)" class="form-control" name="select-product" id="select-product" required>
                             <option>:: Select product for damage ::</option>
                             @foreach ($products as $product )
-                                <option value='{{$product->id."=".$product->name."=".$product->purchase_price."=".$product->sell_price."=".$product->quantity}}'>{{$product->name}}</option>
+                                @php
+                                    $branchStocks = $product->branchStocks->pluck('quantity', 'branch_id')->toJson();
+                                @endphp
+                                <option value='{{$product->id}}' data-purchase-price="{{ $product->purchase_price ?? 0 }}" data-sell-price="{{ $product->sell_price ?? 0 }}" data-stocks="{{ $branchStocks }}">{{$product->name}}</option>
                             @endforeach
 
                         </select>
@@ -105,13 +125,33 @@
 <script>
 
      function selectProduct($this){
-           const $product = $this.value.split('=');
-           document.getElementById('product_id').value = $product[0]
-           document.getElementById('purchase_price').value = $product[2]
-           document.getElementById('sell_price').value = $product[3]
-           document.getElementById('stock_qnty').value = $product[4]
+           const selectedOption = $this.options[$this.selectedIndex];
+           if($this.value) {
+               document.getElementById('product_id').value = $this.value;
+               document.getElementById('purchase_price').value = selectedOption.dataset.purchasePrice || 0;
+               document.getElementById('sell_price').value = selectedOption.dataset.sellPrice || 0;
+           } else {
+               document.getElementById('product_id').value = '';
+               document.getElementById('purchase_price').value = '';
+               document.getElementById('sell_price').value = '';
+           }
+           updateStock();
+     }
 
+     function updateStock() {
+         const productSelect = document.getElementById('select-product');
+         const branchSelect = document.getElementById('branch_id');
+         const stockQntyInput = document.getElementById('stock_qnty');
+
+         if (productSelect.selectedIndex > 0 && branchSelect.value) {
+             const selectedOption = productSelect.options[productSelect.selectedIndex];
+             const stocks = JSON.parse(selectedOption.dataset.stocks || '{}');
+             const branchId = branchSelect.value;
+             stockQntyInput.value = stocks[branchId] || 0;
+         } else {
+             stockQntyInput.value = 0;
          }
+     }
 
     $(document).ready(function () {
 

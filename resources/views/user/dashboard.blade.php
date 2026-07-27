@@ -82,7 +82,7 @@
                            <td><img class="product-img" src="{{ Storage::url($product->image) }}" alt=""></td>
 
                            <td>{{$product->sell_price}}</td>
-                           <td>{{$product->quantity}}</td>
+                           <td>{{$product->total_sold ?? 0}}</td>
 
                            <td>{{$product->updated_at}}</td>
                         </tr>

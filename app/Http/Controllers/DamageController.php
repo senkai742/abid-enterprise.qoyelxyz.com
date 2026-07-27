@@ -37,10 +37,10 @@ class DamageController extends Controller
 
     public function create(Request $request)
     {
-        $products = new Product();
-        $products = $products->get();
+        $products = Product::with('branchStocks')->get();
+        $branches = \App\Models\Branch::all();
         $viewPath = auth()->user()->role === 'admin' ? 'admin.damage.create' : 'user.damage.create';
-        return view($viewPath, compact('products'));
+        return view($viewPath, compact('products', 'branches'));
     }
 
     public function salesreturnDetails($salesreturn_id)
@@ -176,17 +176,41 @@ class DamageController extends Controller
 
     public function store(Request $request)
     {
+        $request->validate([
+            'product_id' => 'required',
+            'damage_qnty' => 'required|numeric|min:1',
+            'branch_id' => 'required'
+        ]);
+
         $product = Product::find($request->product_id);
         if (!$product) {
             return back()->with('error', 'Product not found');
         }
 
+        // Deduct from global quantity (legacy fallback)
         if ($product) {
-            $product->quantity = $product->quantity - $request->damage_qnty;
+            $product->quantity = max(0, $product->quantity - $request->damage_qnty);
             $product->save();
         }
 
         $user = auth()->user();
+        $branchId = $request->branch_id;
+
+        // Deduct from real BranchProductStock
+        $branchStock = \App\Models\BranchProductStock::where('product_id', $product->id)
+            ->where('branch_id', $branchId)
+            ->first();
+
+        if ($branchStock) {
+            if ($branchStock->quantity < $request->damage_qnty) {
+                return back()->with('error', 'Not enough stock in the selected branch to record this damage.');
+            }
+            $branchStock->quantity = max(0, $branchStock->quantity - $request->damage_qnty);
+            $branchStock->save();
+        } else {
+             return back()->with('error', 'No stock record found for this product in the selected branch.');
+        }
+
         // Always fetch prices from database, not from form input
         $purchasePrice = $product->purchase_price ?? 0;
         $sellPrice = $product->sell_price ?? 0;
@@ -200,7 +224,7 @@ class DamageController extends Controller
             'notes' => $request->damage_notes,
             'user_id' => $user->id,
             'company_id' => $user->company_id,
-            'branch_id' => $user->branch_id,
+            'branch_id' => $branchId,
         ]);
 
         return back()->with('success', 'Data saved successfully!');

@@ -68,14 +68,15 @@ class UserController extends Controller
             ->with('product')
             ->get();
 
-        $bestSellingProducts = DB::table('branch_product_stock')
-            ->join('products', 'branch_product_stock.product_id', '=', 'products.id')
-            ->join('branches', 'branch_product_stock.branch_id', '=', 'branches.id')
-            ->where('branch_product_stock.branch_id', $branch_id)
-            ->where('branches.company_id', $company_id)
-            ->orderByDesc('branch_product_stock.quantity')
+        $bestSellingProducts = DB::table('products')
+            ->join('sale_items', 'products.id', '=', 'sale_items.product_id')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->where('sales.branch_id', $branch_id)
+            ->where('sales.company_id', $company_id)
+            ->select('products.*', DB::raw('SUM(sale_items.quantity) as total_sold'))
+            ->groupBy('products.id')
+            ->orderByDesc('total_sold')
             ->limit(10)
-            ->select('products.*', 'branch_product_stock.quantity as branch_quantity')
             ->get();
 
 
