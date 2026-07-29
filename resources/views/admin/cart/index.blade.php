@@ -235,13 +235,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
-    let selectedCustomer = {
-                id: 7,
-                name: "Walking Customer",
-                address: "Admin Sales",
-                phone: "017000000",
-                balance: 0
-            };
+    let selectedCustomer = null;
     let selectedBranch = {{ $branch_id ?: '' }};
     let cartItems = @json($cart);
     let discountAmount = 0;
@@ -253,6 +247,24 @@ document.addEventListener('DOMContentLoaded', function() {
         salesman_selection: '{{ $settings->where("key","feature_salesman_selection")->first()?->value ?? "0" }}' === '1',
         installment_plans: '{{ $settings->where("key","feature_installment_plans")->first()?->value ?? "0" }}' === '1'
     };
+
+    // Initialize customer from dropdown on page load (e.g. if Walking Customer is pre-selected)
+    const initialCustomerSelect = document.getElementById('customer-select');
+    if (initialCustomerSelect && initialCustomerSelect.value) {
+        const initOption = initialCustomerSelect.options[initialCustomerSelect.selectedIndex];
+        if (initOption && initOption.value) {
+            selectedCustomer = {
+                id: initOption.value,
+                name: initOption.getAttribute('data-name') || initOption.text,
+                address: initOption.getAttribute('data-address') || '',
+                phone: initOption.getAttribute('data-phone') || '',
+                balance: parseFloat(initOption.getAttribute('data-balance')) || 0
+            };
+            document.getElementById('customer-name').textContent = selectedCustomer.name;
+            document.getElementById('customer-balance').textContent = selectedCustomer.balance.toFixed(2) + ' BDT';
+            document.getElementById('customer-info').style.display = 'block';
+        }
+    }
 
     // Check if any product has discount
     function hasProductDiscounts() {
@@ -741,13 +753,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Checkout with SweetAlert
     document.getElementById('checkout').addEventListener('click', function() {
-        if (!selectedCustomer) {
-            Swal.fire('Please select a customer', 'warning');
+        if (!selectedCustomer || !selectedCustomer.id) {
+            Swal.fire({
+                title: 'Customer Required',
+                text: 'Please select a customer before checking out.',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            });
+            // Highlight the customer dropdown
+            document.getElementById('customer-select').style.border = '2px solid red';
+            setTimeout(() => {
+                document.getElementById('customer-select').style.border = '';
+            }, 3000);
             return;
         }
 
         if (cartItems.length === 0) {
-            Swal.fire('Cart is empty', 'warning');
+            Swal.fire({
+                title: 'Cart is Empty',
+                text: 'Please add items to the cart before checking out.',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            });
             return;
         }
 

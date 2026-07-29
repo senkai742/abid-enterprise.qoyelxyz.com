@@ -118,17 +118,42 @@ class SalesreturnController extends Controller
         $order = Sale::where('id', $order_id)->with(['items', 'customer', 'items.product'])->first();
         if ($order) {
             $items = $order->items;
+
+            // Calculate already-returned quantities for this order
+            $returnedQtys = SalesreturnItems::where('order_id', $order_id)
+                ->selectRaw('product_id, SUM(qnty) as returned_qty')
+                ->groupBy('product_id')
+                ->pluck('returned_qty', 'product_id');
+
+            // Check if everything has already been fully returned
+            $allFullyReturned = $items->every(function ($item) use ($returnedQtys) {
+                $originalQty = $item->quantity > 0 ? $item->quantity : 1;
+                $alreadyReturned = $returnedQtys->get($item->product_id, 0);
+                return $alreadyReturned >= $originalQty;
+            });
+
+            if ($allFullyReturned) {
+                return response()->json(['error' => 'This order has already been fully returned.'], 422);
+            }
+
             SalesreturnItemCart::truncate();
             foreach ($items as $item) {
-                $quantity = $item->quantity > 0 ? $item->quantity : 1;
-                // SaleController stores sell_price as (unit_price * qty), so recover unit price
-                $unit_price = $item->sell_price / $quantity;
+                $originalQty = $item->quantity > 0 ? $item->quantity : 1;
+                $unit_price = $item->sell_price / $originalQty;
+
+                // Reduce qty by what was already returned
+                $alreadyReturned = $returnedQtys->get($item->product_id, 0);
+                $remainingQty = $originalQty - $alreadyReturned;
+
+                if ($remainingQty <= 0) {
+                    continue; // Skip fully returned items
+                }
 
                 $data = [
                     'purchase_price' => $item->purchase_price ?? 0,
-                    'total_price' => $item->sell_price, // already total
+                    'total_price' => $unit_price * $remainingQty,
                     'sell_price' => $unit_price,
-                    'qnty' => $quantity,
+                    'qnty' => $remainingQty,
                     'product_id' => $item->product_id,
                     'order_id' => $order_id,
                     'customer_id' => $order->customer_id,
@@ -187,7 +212,7 @@ class SalesreturnController extends Controller
 
         try {
             // Get cart items from salesreturn_item_carts table
-            $cart_items = $request->user()->salesreturnCart()->where('customer_id', $request->customer_id)->get();
+            $cart_items = $request->user()->salesreturnCart()->wherePivot('customer_id', $request->customer_id)->get();
 
             \Log::info('Cart items found: ' . $cart_items->count());
 
@@ -269,8 +294,13 @@ class SalesreturnController extends Controller
                     'success' => true,
                     'message' => 'Sales return processed successfully'
                 ]);
+            } else {
+                return response([
+                    'success' => false,
+                    'message' => 'No items in the sales return cart for this customer'
+                ], 400);
             }
-            } catch (\Exception $e) {
+        } catch (\Exception $e) {
             return response([
                 'success' => false,
                 'message' => 'Error processing sales return: ' . $e->getMessage()

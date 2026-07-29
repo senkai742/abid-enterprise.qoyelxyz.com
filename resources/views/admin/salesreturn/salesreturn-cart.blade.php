@@ -348,7 +348,8 @@ function findOrderID() {
             location.reload(); // Reload to update cart with order items
         },
         error: function(xhr) {
-            Swal.fire('Error!', 'Failed to find order', 'error');
+            const msg = xhr.responseJSON?.error || 'Failed to find order';
+            Swal.fire('Error!', msg, 'error');
         }
     });
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SaleStoreRequest;
 use App\Models\Sale;
 use App\Models\Customer;
+use App\Models\SalesreturnItems;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -198,7 +199,6 @@ class SaleController extends Controller
     }
     public function partialPayment(Request $request)
     {
-        // return $request;
         $orderId = $request->order_id;
         $amount = $request->amount;
         $user = Auth::user();
@@ -211,19 +211,22 @@ class SaleController extends Controller
         // Find the order
         $order = Sale::findOrFail($orderId);
 
-        if ($order->customer_id) {
-            $customer = Customer::where('id', $order->customer_id)->first();
-            if ($customer) {
-                $customer->balance = $customer->balance - $request->amount;
-                $customer->save();
-            }
+        // Check how much has already been returned for this order
+        $totalReturned = SalesreturnItems::where('order_id', $orderId)->sum('total_price');
+
+        // Effective remaining balance = (grand total - what was returned) - what was already paid
+        $effectiveTotal = $order->gr_total - $totalReturned;
+        $remainingAmount = $effectiveTotal - $order->receivedAmount();
+
+        if ($remainingAmount <= 0) {
+            $route = $user->role === 'admin' ? 'admin.sales.index' : 'user.sales.index';
+            return redirect()->route($route)->withErrors('This sale has already been fully paid or returned.');
         }
 
         // Check if the amount exceeds the remaining balance
-        $remainingAmount = $order->total() - $order->receivedAmount();
         if ($amount > $remainingAmount) {
             $route = $user->role === 'admin' ? 'admin.sales.index' : 'user.sales.index';
-            return redirect()->route($route)->withErrors('Amount exceeds remaining balance');
+            return redirect()->route($route)->withErrors('Amount exceeds remaining balance of ' . number_format($remainingAmount, 2));
         }
 
         // Save the payment
@@ -235,6 +238,15 @@ class SaleController extends Controller
                 'company_id' => $user->company_id,
             ]);
         });
+
+        // Update customer balance AFTER successful validation and save
+        if ($order->customer_id) {
+            $customer = Customer::where('id', $order->customer_id)->first();
+            if ($customer) {
+                $customer->balance = $customer->balance - $amount;
+                $customer->save();
+            }
+        }
 
         return redirect()->route($user->role === 'admin' ? 'admin.sales.index' : 'user.sales.index')->with('success', 'Partial payment of ' . config('settings.currency_symbol') . number_format($amount, 2) . ' made successfully.');
     }

@@ -214,10 +214,21 @@ class PurchaseController extends Controller
         // Find the purchase
         $purchase = Purchase::findOrFail($purchaseId);
 
+        // Check how much has already been returned for this purchase
+        $totalReturned = \App\Models\PurchaseReturnItems::where('purchase_id', $purchaseId)->sum('total_price');
+
+        // Effective total = original total - returned total
+        $effectiveTotal = $purchase->gr_total - $totalReturned;
+
         // Check if the amount exceeds the remaining balance
-        $remainingAmount = $purchase->gr_total - $purchase->paid_amount;
+        $remainingAmount = $effectiveTotal - $purchase->paid_amount;
+
+        if ($remainingAmount <= 0) {
+            return redirect()->route('admin.purchase.index')->withErrors('This purchase has already been fully paid or returned.');
+        }
+
         if ($amount > $remainingAmount) {
-            return redirect()->route('admin.purchase.index')->withErrors('Amount exceeds remaining balance');
+            return redirect()->route('admin.purchase.index')->withErrors('Amount exceeds remaining balance of ' . number_format($remainingAmount, 2));
         }
 
         // Update the paid_amount on the purchase

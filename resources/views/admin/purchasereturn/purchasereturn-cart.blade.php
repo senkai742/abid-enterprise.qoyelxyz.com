@@ -218,6 +218,7 @@
 <script>
 let cart = [];
 let currentPurchaseId = null;
+let currentPurchase = null;
 let currentSupplierId = null;
 
 // Initialize
@@ -268,6 +269,7 @@ function findPurchaseID() {
 
                 // Store purchase ID for later use
                 currentPurchaseId = data.purchase.id;
+                currentPurchase = data.purchase;
 
                 // Load items to cart
                 if (data.purchasereturn_items && data.purchasereturn_items.length > 0) {
@@ -447,8 +449,6 @@ function calculateTotals() {
     // Don't let discount exceed subtotal
     if (discount > subTotal) {
         discount = subTotal;
-        // Optionally update the input field visually if you want to force it
-        // document.getElementById('discount_amount').value = discount; 
     }
     
     const returnAmount = parseFloat(document.getElementById('return_amount').value) || 0;
@@ -457,10 +457,22 @@ function calculateTotals() {
     document.getElementById('sub_total').textContent = subTotal.toFixed(2);
     document.getElementById('gr_total').textContent = netTotal.toFixed(2);
 
-    // Auto-fill return amount to net total if it's still 0
-    // (don't override if user has typed something)
+    // Auto-fill return amount based on how much was actually paid
     if (returnAmount === 0 && netTotal > 0) {
-        document.getElementById('return_amount').value = netTotal.toFixed(2);
+        let maxRefund = netTotal;
+        if (currentPurchase) {
+            // Determine how much is still owed by the user to the supplier
+            // gr_total - paid_amount = due_amount
+            const grTotal = parseFloat(currentPurchase.gr_total) || 0;
+            const paidAmount = parseFloat(currentPurchase.paid_amount) || 0;
+            const dueAmount = grTotal - paidAmount;
+            
+            if (dueAmount > 0) {
+                // Return amount should offset the due amount first
+                maxRefund = Math.max(0, netTotal - dueAmount);
+            }
+        }
+        document.getElementById('return_amount').value = maxRefund.toFixed(2);
     }
 }
 

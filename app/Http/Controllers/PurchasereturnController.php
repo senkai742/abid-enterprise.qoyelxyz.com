@@ -210,7 +210,10 @@ class PurchasereturnController extends Controller
 
                 if ($request->supplier_id) {
                     $supplier = Supplier::where('id', $request->supplier_id)->first();
-                    $supplier->balance = $supplier->balance - $request->amount;
+                    // Supplier balance logic:
+                    // Returning goods means we owe the supplier less, so balance goes UP by $total_price.
+                    // If the supplier refunds us cash ($request->amount), we owe them more, so balance goes DOWN.
+                    $supplier->balance = $supplier->balance + $total_price - $request->amount;
                     $supplier->save();
                 }
 

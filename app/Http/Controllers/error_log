@@ -1,4 +1,0 @@
-[18-Apr-2026 22:43:50 UTC] PHP Fatal error:  Uncaught Error: Class "App\Http\Controllers\Controller" not found in /home/ekhaneo/public_html/app/Http/Controllers/HomeController.php:10
-Stack trace:
-#0 {main}
-  thrown in /home/ekhaneo/public_html/app/Http/Controllers/HomeController.php on line 10

@@ -74,10 +74,22 @@ class PurchaseController extends Controller
         // Find the purchase
         $purchase = Purchase::findOrFail($purchaseId);
 
+        // Check how much has already been returned for this purchase
+        $totalReturned = \App\Models\PurchaseReturnItems::where('purchase_id', $purchaseId)->sum('total_price');
+
+        // Effective total = original total - returned total
+        // Note: The total() method should get the sub/grand total logic correctly, but we'll manually get remaining
+        // wait, I need to check what $purchase->total() returns. Wait, in admin purchase controller I used $purchase->gr_total
+        $effectiveTotal = $purchase->total() - $totalReturned;
+        $remainingAmount = $effectiveTotal - $purchase->receivedAmount();
+
+        if ($remainingAmount <= 0) {
+            return redirect()->route('purchases.index')->withErrors('This purchase has already been fully paid or returned.');
+        }
+
         // Check if the amount exceeds the remaining balance
-        $remainingAmount = $purchase->total() - $purchase->receivedAmount();
         if ($amount > $remainingAmount) {
-            return redirect()->route('purchases.index')->withErrors('Amount exceeds remaining balance');
+            return redirect()->route('purchases.index')->withErrors('Amount exceeds remaining balance of ' . number_format($remainingAmount, 2));
         }
 
         // Save the payment
