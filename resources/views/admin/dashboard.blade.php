@@ -91,7 +91,7 @@
                         <tr>
                            <td>{{$product->id}}</td>
                            <td>{{$product->name}}</td>
-                           <td><img class="product-img" src="{{ Storage::url($product->image) }}" alt=""></td>
+                           <td><img class="product-img" src="{{ $product->getImageUrl() }}" alt=""></td>
 
                            <td>{{$product->sell_price}}</td>
                            <td>{{$product->total_sold ?? 0}}</td>
@@ -130,7 +130,7 @@
                         <tr>
                            <td>{{$product->id}}</td>
                            <td>{{$product->name}}</td>
-                           <td><img class="product-img" src="{{ Storage::url($product->image) }}" alt=""></td>
+                           <td><img class="product-img" src="{{ $product->getImageUrl() }}" alt=""></td>
                            <td>{{$product->barcode}}</td>
                            <td>{{$product->sell_price}}</td>
                            <td class="text-danger">{{$product->quantity}}</td>

@@ -258,7 +258,7 @@ class SalesreturnController extends Controller
 
                 if ($request->customer_id) {
                     $customer = Customer::where('id', $request->customer_id)->first();
-                    $customer->balance = $customer->balance + ($request->amount);
+                    $customer->balance = $customer->balance - $discounted_total + floatval($request->amount);
                     $customer->save();
                 }
 

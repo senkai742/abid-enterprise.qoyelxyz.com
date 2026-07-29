@@ -27,17 +27,8 @@ class Customer extends Model
     {
         static::addGlobalScope('branch', function (Builder $builder) {
             $user = Auth::user();
-            if (!$user) {
-                return; // Don't apply scope if no user is authenticated
-            }
-            $company_id = $user->company_id;
-            $branch_id = $user->branch_id;
-            $role = $user->role;
-            if ($role == "admin") {
-                $builder->where('company_id', $company_id);
-            } else {
-                $builder->where('company_id', $company_id)->where('branch_id', $branch_id);
-            }
+            if (!$user) return;
+            $builder->where('company_id', $user->company_id);
         });
     }
 

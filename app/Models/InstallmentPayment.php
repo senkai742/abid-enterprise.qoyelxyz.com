@@ -25,14 +25,10 @@ class InstallmentPayment extends Model
     {
         static::addGlobalScope('branch', function (Builder $builder) {
             $user = auth()->user();
-            if ($user) {
-                $builder->whereHas('order', function ($query) use ($user) {
-                    $query->where('company_id', $user->company_id);
-                    if ($user->role !== 'admin') {
-                        $query->where('branch_id', $user->branch_id);
-                    }
-                });
-            }
+            if (!$user) return;
+            $builder->whereHas('order', function ($query) use ($user) {
+                $query->where('company_id', $user->company_id);
+            });
         });
     }
 

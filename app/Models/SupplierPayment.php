@@ -18,14 +18,8 @@ class SupplierPayment extends Model
     protected static function booted() {
         static::addGlobalScope('branch', function (Builder $builder) {
             $user = auth()->user();
-            $company_id = $user->company_id;
-            $branch_id = $user->branch_id;
-            $role = $user->role;
-            if($role=="admin"){
-                $builder->where('company_id', $company_id);
-            }else{
-                $builder->where('company_id', $company_id)->where('branch_id', $branch_id);
-            }
+            if (!$user) return;
+            $builder->where('company_id', $user->company_id);
         });
     }
 

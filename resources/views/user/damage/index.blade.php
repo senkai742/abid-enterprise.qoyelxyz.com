@@ -46,7 +46,7 @@
                 @foreach ($damages as $damage)
                 <tr>
                     <td> {{$damage->id}}</td>
-                    <td>{{$damage->product->name}}</td>
+                    <td>{{ optional($damage->product)->name }}</td>
 
                     <td>{{number_format($damage->qnty,0)}}</td>
                     <td>{{ config('settings.currency_symbol') }} {{number_format($damage->purchase_price)}}</td>

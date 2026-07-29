@@ -23,25 +23,9 @@ class DamageItem extends Model
 
     protected static function booted() {
         static::addGlobalScope('branch', function (Builder $builder) {
-             $user = auth()->user();
-            $company_id = $user->company_id;
-            $branch_id = $user->branch_id;
-            $role = $user->role;
-            if($role=="admin"){
-                // Admin sees records from their company OR records with no company assigned
-                $builder->where(function($query) use ($company_id) {
-                    $query->where('company_id', $company_id)
-                          ->orWhereNull('company_id');
-                });
-            }else{
-                $builder->where(function($query) use ($company_id, $branch_id) {
-                    $query->where('company_id', $company_id)
-                          ->orWhereNull('company_id');
-                })->where(function($query) use ($branch_id) {
-                    $query->where('branch_id', $branch_id)
-                          ->orWhereNull('branch_id');
-                });
-            }
+            $user = auth()->user();
+            if (!$user) return;
+            $builder->where('company_id', $user->company_id);
         });
     }
 
