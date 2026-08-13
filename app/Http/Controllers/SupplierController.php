@@ -25,8 +25,7 @@ class SupplierController extends Controller
         }
 
         // For regular view requests, return paginated suppliers using global scope
-        $suppliers = new Supplier();
-        $suppliers = $suppliers->latest()->paginate(10);
+        $suppliers = Supplier::with('balancePayments')->latest()->paginate(10);
         $viewPath = $user->role === 'admin' ? 'admin.suppliers.index' : 'user.suppliers.index';
         return view($viewPath, compact('suppliers'));
     }
@@ -113,11 +112,24 @@ class SupplierController extends Controller
     public function pay(Request $request, Supplier $supplier)
     {
         $request->validate(['amount' => 'required|numeric|min:1']);
+        $amount = (float) $request->amount;
+
         // Paying a supplier increases the balance (debt decreases)
-        $supplier->balance = $supplier->balance + $request->amount;
+        $supplier->balance = $supplier->balance + $amount;
         $supplier->save();
-        // Optionally, log the payment in SupplierPayment model
+
+        // Log the payment in dedicated balance payments table
+        \App\Models\SupplierBalancePayment::create([
+            'supplier_id' => $supplier->id,
+            'amount'      => $amount,
+            'note'        => $request->note ?? null,
+            'user_id'     => Auth::id(),
+            'branch_id'   => Auth::user()->branch_id,
+            'company_id'  => Auth::user()->company_id,
+        ]);
+
         $routeName = Auth::user()->role === 'admin' ? 'admin.suppliers.index' : 'user.suppliers.index';
         return redirect()->route($routeName)->with('success', 'Payment successful!');
     }
 }
+

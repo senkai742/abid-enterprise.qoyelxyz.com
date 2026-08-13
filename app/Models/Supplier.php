@@ -34,5 +34,13 @@ class Supplier extends Model
         });
     }
 
-    // Define relationships here (e.g., with the Product model)
+    public function purchases()
+    {
+        return $this->hasMany(\App\Models\Purchase::class);
+    }
+
+    public function balancePayments()
+    {
+        return $this->hasMany(\App\Models\SupplierBalancePayment::class);
+    }
 }
