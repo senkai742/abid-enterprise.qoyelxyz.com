@@ -10,19 +10,28 @@
 <div class="card">
 
     <div class="card-body">
-        <div class="row">
-            <div class="col-md-7"></div>
-            <div class="col-md-5">
+        <div class="row mb-3">
+            <div class="col-md-12">
                 <form action="{{route('admin.sales.index')}}">
-                    <div class="row">
-                        <div class="col-md-5">
+                    <div class="row justify-content-end">
+                        <div class="col-md-3">
+                            <select name="customer_id" class="form-control">
+                                <option value="">{{ __('All Customers') }}</option>
+                                @foreach($customers as $cust)
+                                    <option value="{{ $cust->id }}" {{ request('customer_id') == $cust->id ? 'selected' : '' }}>
+                                        {{ $cust->first_name }} {{ $cust->last_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <input type="date" name="start_date" class="form-control" value="{{request('start_date')}}" />
                         </div>
-                        <div class="col-md-5">
+                        <div class="col-md-3">
                             <input type="date" name="end_date" class="form-control" value="{{request('end_date')}}" />
                         </div>
                         <div class="col-md-2">
-                            <button class="btn btn-outline-primary" type="submit">{{ __('order.submit') }}</button>
+                            <button class="btn btn-outline-primary btn-block" type="submit">{{ __('order.submit') }}</button>
                         </div>
                     </div>
                 </form>
@@ -131,7 +140,7 @@
             </tfoot>
         </table>
 
-        <div class="text-center">{{ $sales->render() }}</div>
+        <div class="text-center">{{ $sales->appends(request()->query())->render() }}</div>
     </div>
 </div>
 @endsection

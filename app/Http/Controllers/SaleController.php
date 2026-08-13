@@ -20,6 +20,17 @@ class SaleController extends Controller
         if ($user->role !== 'admin') {
             $sales = $sales->where('branch_id', $user->branch_id)->where('company_id', $user->company_id);
         }
+        if ($request->customer_id) {
+            $sales = $sales->where('customer_id', $request->customer_id);
+        }
+        if ($request->customer_name) {
+            $customerName = $request->customer_name;
+            $sales = $sales->whereHas('customer', function ($q) use ($customerName) {
+                $q->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$customerName}%")
+                  ->orWhere('first_name', 'like', "%{$customerName}%")
+                  ->orWhere('last_name', 'like', "%{$customerName}%");
+            });
+        }
         if ($request->start_date) {
             $sales = $sales->where('created_at', '>=', $request->start_date);
         }
@@ -27,6 +38,8 @@ class SaleController extends Controller
             $sales = $sales->where('created_at', '<=', $request->end_date . ' 23:59:59');
         }
         $sales = $sales->with(['items.product', 'payments', 'customer'])->latest()->paginate(10);
+
+        $customers = \App\Models\Customer::where('company_id', $user->company_id)->get();
 
         $total = $sales->map(function ($i) {
             return $i->total();
@@ -36,7 +49,7 @@ class SaleController extends Controller
         })->sum();
 
         $viewPath = $user->role === 'admin' ? 'admin.sales.index' : 'user.sales.index';
-        return view($viewPath, compact('sales', 'total', 'receivedAmount'));
+        return view($viewPath, compact('sales', 'total', 'receivedAmount', 'customers'));
     }
 
     public function show(Sale $sale)
