@@ -1,9 +1,9 @@
-@extends('user.layouts.user')
+@extends('admin.layouts.admin')
 
 @section('title', __('Damages'))
 @section('content-header', __('Damages'))
 @section('content-actions')
-<a href="{{route('user.damages.create')}}" class="btn btn-primary">{{ __('+ Damage') }}</a>
+<a href="{{route('admin.damages.create')}}" class="btn btn-primary">{{ __('+ Damage') }}</a>
 @endsection
 @section('content')
 
@@ -13,7 +13,7 @@
         <div class="row">
             <div class="col-md-6"></div>
             <div class="col-md-6">
-                <form action="{{route('user.salesreturns.index')}}">
+                <form action="{{route('admin.damage.index')}}">
                     <div class="row">
                         <div class="col-md-4">
                             <input type="date" name="start_date" class="form-control" value="{{request('start_date')}}" />

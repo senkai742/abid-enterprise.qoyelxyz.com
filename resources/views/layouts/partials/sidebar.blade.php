@@ -66,6 +66,13 @@
                 </li>
 
                 <li class="nav-item has-treeview">
+                    <a href="{{ route('admin.branch-transfer.index') }}" class="nav-link">
+                        <i class="nav-icon fas fa-exchange-alt"></i>
+                        <p>Branch Transfer</p>
+                    </a>
+                </li>
+
+                <li class="nav-item has-treeview">
                     <a href="{{ route('admin.damage.index') }}" class="nav-link {{ activeSegment('damage') }}">
                         <i class="nav-icon fas fa-exclamation-triangle"></i>
                         <p>{{ __('Damage') }}</p>
@@ -92,13 +99,6 @@
                     <a href="{{ route('admin.products.index') }}" class="nav-link {{ activeSegment('products') }}">
                         <i class="nav-icon fas fa-boxes"></i>
                         <p>{{ __('product.title') }}</p>
-                    </a>
-                </li>
-
-                <li class="nav-item has-treeview">
-                    <a href="{{ route('admin.branch-transfer.index') }}" class="nav-link">
-                        <i class="nav-icon fas fa-exchange-alt"></i>
-                        <p>Branch Transfer</p>
                     </a>
                 </li>
 
