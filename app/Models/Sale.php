@@ -31,7 +31,7 @@ class Sale extends Model
         static::addGlobalScope('branch', function (Builder $builder) {
             $user = auth()->user();
             if (!$user) return;
-            $builder->where('company_id', $user->company_id);
+            $builder->where($builder->getModel()->getTable() . '.company_id', $user->company_id);
         });
     }
 

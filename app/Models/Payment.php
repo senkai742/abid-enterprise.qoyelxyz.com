@@ -9,7 +9,8 @@ class Payment extends Model
 {
     protected $fillable = [
         'amount',
-        'order_id',
+        'source',
+        'sale_id',
         'user_id',
         'branch_id',
         'company_id',
@@ -17,7 +18,7 @@ class Payment extends Model
 
     public function sale()
     {
-        return $this->belongsTo(\App\Models\Sale::class, 'order_id');
+        return $this->belongsTo(\App\Models\Sale::class, 'sale_id');
     }
 
     protected static function booted()
@@ -25,7 +26,7 @@ class Payment extends Model
         static::addGlobalScope('branch', function (Builder $builder) {
             $user = auth()->user();
             if (!$user) return;
-            $builder->where('company_id', $user->company_id);
+            $builder->where($builder->getModel()->getTable() . '.company_id', $user->company_id);
         });
     }
 }

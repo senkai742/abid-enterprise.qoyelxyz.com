@@ -27,7 +27,7 @@ class CustomerController extends Controller
         }
 
         // For regular view requests, return paginated customers using global scope
-        $customers = Customer::with('orders')->latest()->paginate(10);
+        $customers = Customer::with(['orders.payments', 'payments.sale'])->latest()->paginate(10);
         $viewPath = $user->role === 'admin' ? 'admin.customers.index' : 'user.customers.index';
         return view($viewPath, compact('customers'));
     }
@@ -117,6 +117,27 @@ class CustomerController extends Controller
         $amount = (float) $request->amount;
         $customer->balance = max(0, $customer->balance - $amount);
         $customer->save();
+
+        // Find customer's sale with remaining due to attach payment
+        $dueSale = $customer->orders()
+            ->get()
+            ->filter(function($sale) {
+                return ($sale->total() - $sale->receivedAmount()) > 0;
+            })
+            ->first();
+
+        $orderId = $dueSale ? $dueSale->id : ($customer->orders()->latest()->first()?->id);
+
+        if ($orderId) {
+            \App\Models\Payment::create([
+                'amount' => $amount,
+                'source' => 'customer_page',
+                'sale_id' => $orderId,
+                'user_id' => Auth::id(),
+                'branch_id' => Auth::user()->branch_id,
+                'company_id' => Auth::user()->company_id,
+            ]);
+        }
 
         $routeName = Auth::user()->role === 'admin' ? 'admin.customers.index' : 'user.customers.index';
         return redirect()->route($routeName)->with('success', 'Payment of ' . config('settings.currency_symbol') . number_format($amount, 2) . ' recorded for ' . $customer->first_name . ' ' . $customer->last_name);
