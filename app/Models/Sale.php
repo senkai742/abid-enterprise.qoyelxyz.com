@@ -96,8 +96,22 @@ class Sale extends Model
         })->sum();
     }
 
+    public function posReceivedAmount()
+    {
+        return $this->payments->filter(function ($i) {
+            return $i->source !== 'customer_page';
+        })->map(function ($i) {
+            return $i->amount;
+        })->sum();
+    }
+
     public function formattedReceivedAmount()
     {
         return number_format($this->receivedAmount(), 2);
+    }
+
+    public function formattedPosReceivedAmount()
+    {
+        return number_format($this->posReceivedAmount(), 2);
     }
 }

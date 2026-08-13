@@ -45,7 +45,7 @@ class SaleController extends Controller
             return $i->total();
         })->sum();
         $receivedAmount = $sales->map(function ($i) {
-            return $i->receivedAmount();
+            return $i->posReceivedAmount();
         })->sum();
 
         $viewPath = $user->role === 'admin' ? 'admin.sales.index' : 'user.sales.index';

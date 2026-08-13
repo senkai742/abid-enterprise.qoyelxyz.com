@@ -58,19 +58,19 @@
                     <td>{{$order->getCustomerName()}}</td>
                     <td>{{ config('settings.currency_symbol') }} {{number_format($order->sub_total, 2)}}</td>
                     <td>{{ config('settings.currency_symbol') }} {{$order->formattedTotal()}}</td>
-                    <td>{{ config('settings.currency_symbol') }} {{$order->formattedReceivedAmount()}}</td>
+                    <td>{{ config('settings.currency_symbol') }} {{$order->formattedPosReceivedAmount()}}</td>
                     <td>
-                        @if($order->receivedAmount() == 0)
+                        @if($order->posReceivedAmount() == 0)
                             <span class="badge badge-danger">{{ __('order.Not_Paid') }}</span>
-                        @elseif($order->receivedAmount() < $order->total())
+                        @elseif($order->posReceivedAmount() < $order->total())
                             <span class="badge badge-warning">{{ __('order.Partial') }}</span>
-                        @elseif($order->receivedAmount() == $order->total())
+                        @elseif($order->posReceivedAmount() == $order->total())
                             <span class="badge badge-success">{{ __('order.Paid') }}</span>
-                        @elseif($order->receivedAmount() > $order->total())
+                        @elseif($order->posReceivedAmount() > $order->total())
                             <span class="badge badge-info">{{ __('order.Change') }}</span>
                         @endif
                     </td>
-                    <td>{{config('settings.currency_symbol')}} {{number_format($order->total() - $order->receivedAmount(), 2)}}</td>
+                    <td>{{config('settings.currency_symbol')}} {{number_format($order->total() - $order->posReceivedAmount(), 2)}}</td>
                     <td>{{$order->created_at}}</td>
                     <td>
                         <button
@@ -80,16 +80,16 @@
                             data-order-id="{{ $order->id }}"
                             data-customer-name="{{ $order->getCustomerName() }}"
                             data-total="{{ $order->total() }}"
-                            data-received="{{ $order->receivedAmount() }}"
+                            data-received="{{ $order->posReceivedAmount() }}"
                             data-items="{{ json_encode($order->items) }}"
                             data-created-at="{{ $order->created_at }}"
                             data-payment="{{ isset($order->payments) && count($order->payments) > 0 ? $order->payments[0]->amount : 0 }}">
                             <ion-icon size="samll" name="eye"></ion-icon>
                         </button>
 
-                        @if($order->total() > $order->receivedAmount())
+                        @if($order->total() > $order->posReceivedAmount())
                             <!-- Button for Partial Payment -->
-                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#partialPaymentModal" data-orders-id="{{ $order->id }}" data-remaining-amount="{{ $order->total() - $order->receivedAmount() }}">
+                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#partialPaymentModal" data-orders-id="{{ $order->id }}" data-remaining-amount="{{ $order->total() - $order->posReceivedAmount() }}">
                                 Pay Partial Amount
                             </button>
                             <!-- Partial Payment Modal -->
@@ -108,7 +108,7 @@
                                                 <input type="hidden" name="order_id" id="modalOrderId" value="">
                                                 <div class="form-group">
                                                     <label for="partialAmount">Enter Amount to Pay</label>
-                                                    <input type="number" class="form-control" step="0.01" id="partialAmount" name="amount" value="{{ $order->total() - $order->receivedAmount() }}">
+                                                    <input type="number" class="form-control" step="0.01" id="partialAmount" name="amount" value="{{ $order->total() - $order->posReceivedAmount() }}">
                                                 </div>
                                                 <button type="submit" class="btn btn-primary">Submit Payment</button>
                                             </form>
