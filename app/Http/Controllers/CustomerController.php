@@ -27,8 +27,7 @@ class CustomerController extends Controller
         }
 
         // For regular view requests, return paginated customers using global scope
-        $customers = new Customer();
-        $customers = $customers->latest()->paginate(10);
+        $customers = Customer::with('orders')->latest()->paginate(10);
         $viewPath = $user->role === 'admin' ? 'admin.customers.index' : 'user.customers.index';
         return view($viewPath, compact('customers'));
     }
@@ -107,5 +106,19 @@ class CustomerController extends Controller
         $customer->delete();
         $routeName = Auth::user()->role === 'admin' ? 'admin.customers.index' : 'user.customers.index';
         return redirect()->route($routeName)->with('success', 'Customer deleted successfully!');
+    }
+
+    public function pay(Request $request, Customer $customer)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+        ]);
+
+        $amount = (float) $request->amount;
+        $customer->balance = max(0, $customer->balance - $amount);
+        $customer->save();
+
+        $routeName = Auth::user()->role === 'admin' ? 'admin.customers.index' : 'user.customers.index';
+        return redirect()->route($routeName)->with('success', 'Payment of ' . config('settings.currency_symbol') . number_format($amount, 2) . ' recorded for ' . $customer->first_name . ' ' . $customer->last_name);
     }
 }

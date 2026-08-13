@@ -59,6 +59,7 @@ Route::prefix('user', 'user_guard')->middleware(['auth'])->group(function () {
         'update' => 'user.customers.update',
         'destroy' => 'user.customers.destroy',
     ]);
+    Route::post('/customers/{customer}/pay', [CustomerController::class, 'pay'])->name('user.customers.pay');
 
     // User Suppliers
     Route::resource('suppliers', SupplierController::class)->names([
@@ -203,6 +204,7 @@ Route::middleware(['auth', 'admin_guard'])->prefix('admin')->group(function () {
         'update' => 'admin.customers.update',
         'destroy' => 'admin.customers.destroy',
     ]);
+    Route::post('/customers/{customer}/pay', [CustomerController::class, 'pay'])->name('admin.customers.pay');
 
     // Admin Suppliers
     Route::resource('suppliers', SupplierController::class)->names([
