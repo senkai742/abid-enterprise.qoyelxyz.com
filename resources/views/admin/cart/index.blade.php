@@ -783,17 +783,29 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const paidAmountValue = document.getElementById('paid-amount').value;
+        const paidAmountInput = document.getElementById('paid-amount').value;
+        const currentGrandTotal = parseFloat(document.getElementById('grand-total')?.value) || 0;
+        const defaultPayValue = (paidAmountInput !== '' && paidAmountInput !== null) ? paidAmountInput : currentGrandTotal;
 
         Swal.fire({
-            title: 'Save POS',
-            input: 'text',
-            inputValue: paidAmountValue,
+            title: 'Confirm Sale',
+            input: 'number',
+            inputLabel: 'Paid / Received Amount ({{ config("settings.currency_symbol", "Taka") }})',
+            inputPlaceholder: 'Enter amount paid by customer',
+            inputValue: defaultPayValue,
+            inputAttributes: {
+                min: 0,
+                step: 'any'
+            },
             showCancelButton: true,
             confirmButtonText: 'Save Sale',
             cancelButtonText: 'Cancel',
             showLoaderOnConfirm: true,
             preConfirm: (amount) => {
+                if (amount === '' || amount === null || isNaN(amount) || parseFloat(amount) < 0) {
+                    Swal.showValidationMessage('Please enter a valid paid amount (0 or more).');
+                    return false;
+                }
                 // Get selected salesman and installment values (only if features are enabled)
                 const salesmanId = features.salesman_selection ?
                     (document.getElementById('salesman-select')?.value || null) : null;
@@ -841,15 +853,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (response.ok) {
                         return response.json();
                     } else {
-                        // Try to get error details
                         return response.text().then(text => {
                             console.error('Sale error response:', text);
+                            let userMessage = '';
                             try {
                                 const jsonError = JSON.parse(text);
-                                throw new Error(jsonError.message || jsonError.error || text);
+                                if (jsonError.errors && typeof jsonError.errors === 'object') {
+                                    const messages = [];
+                                    for (const field in jsonError.errors) {
+                                        if (Array.isArray(jsonError.errors[field])) {
+                                            messages.push(...jsonError.errors[field]);
+                                        } else if (typeof jsonError.errors[field] === 'string') {
+                                            messages.push(jsonError.errors[field]);
+                                        }
+                                    }
+                                    if (messages.length > 0) {
+                                        userMessage = messages.join('\n');
+                                    }
+                                }
+                                if (!userMessage && jsonError.message) {
+                                    userMessage = jsonError.message;
+                                }
+                                if (!userMessage && jsonError.error) {
+                                    userMessage = jsonError.error;
+                                }
                             } catch (e) {
-                                throw new Error(text || 'Unknown error occurred');
+                                // text wasn't JSON
                             }
+
+                            if (!userMessage) {
+                                userMessage = (text && !text.startsWith('<')) ? text : 'Could not complete sale. Please check your inputs.';
+                            }
+
+                            throw new Error(userMessage);
                         });
                     }
                 })
@@ -875,17 +911,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch(error => {
                     console.error('Sale error:', error);
-                    console.error('Error message:', error.message);
-                    console.error('Error stack:', error.stack);
-                    Swal.showValidationMessage(`Error: ${error.message}`);
+                    Swal.showValidationMessage(error.message || 'An error occurred while completing the sale.');
                 });
             },
             allowOutsideClick: () => !Swal.isLoading()
         }).then((result) => {
             if (result.value) {
-                Swal.fire('Success', 'Order has been saved!', 'success');
-                // Reload page
-                setTimeout(() => location.reload(), 1000);
+                const sale = result.value;
+                const printUrl = `/admin/sales/print/${sale.id}`;
+
+                Swal.fire({
+                    title: 'Order Saved Successfully!',
+                    text: `Sale #${sale.id} has been saved.`,
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-print"></i> Print Invoice',
+                    cancelButtonText: 'Done / New Sale',
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#007bff'
+                }).then((res) => {
+                    if (res.isConfirmed) {
+                        window.open(printUrl, '_blank');
+                        setTimeout(() => location.reload(), 500);
+                    } else {
+                        location.reload();
+                    }
+                });
             }
         });
     });

@@ -29,4 +29,13 @@ class SaleStoreRequest extends FormRequest
             'discount_amount' => 'nullable|numeric|min:0',
         ];
     }
+
+    public function messages()
+    {
+        return [
+            'amount.required' => 'Please enter the amount paid by the customer.',
+            'amount.numeric' => 'The paid amount must be a valid number.',
+            'amount.min' => 'The paid amount cannot be negative.',
+        ];
+    }
 }
