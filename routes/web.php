@@ -172,6 +172,7 @@ Route::middleware(['auth', 'admin_guard'])->prefix('admin')->group(function () {
     // Admin Settings
     Route::get('/settings', [SettingController::class, 'index'])->name('admin.settings.index');
     Route::post('/settings', [SettingController::class, 'store'])->name('admin.settings.store');
+    Route::post('/settings/logo', [SettingController::class, 'uploadLogo'])->name('admin.settings.logo');
     Route::get('/branch/list', [SettingController::class, 'branchList'])->name('admin.branch.list');
     Route::get('/load-branches', [SettingController::class, 'loadBranches'])->name('adminload.branches');
     Route::post('/branch/store', [SettingController::class, 'branchStore'])->name('admin.branch.store');

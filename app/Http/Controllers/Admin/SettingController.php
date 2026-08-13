@@ -25,8 +25,30 @@ class SettingController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->except('_token');
         $company_id = Auth::user()->company_id;
+
+        if ($request->hasFile('invoice_logo')) {
+            $request->validate(['invoice_logo' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240']);
+            $file = $request->file('invoice_logo');
+            $filename = 'logo_' . $company_id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $destDir = public_path('logos');
+
+            if (!file_exists($destDir)) {
+                mkdir($destDir, 0755, true);
+            }
+
+            $file->move($destDir, $filename);
+            $path = 'logos/' . $filename;
+
+            $setting = Setting::firstOrCreate(['key' => 'invoice_logo', 'company_id' => $company_id]);
+            $setting->value = $path;
+            $setting->save();
+        } elseif ($request->files->has('invoice_logo') && $request->file('invoice_logo') !== null && !$request->file('invoice_logo')->isValid()) {
+            $errorMsg = $request->file('invoice_logo')->getErrorMessage();
+            return redirect()->back()->with('error', 'Logo upload failed: ' . $errorMsg);
+        }
+
+        $data = $request->except(['_token', 'invoice_logo']);
         $feature_barcode_scanner = 0;
         $feature_salesman_selection = 0;
         $feature_installment_plans = 0;
@@ -63,6 +85,29 @@ class SettingController extends Controller
         $setting->save();
             
         return redirect()->route('admin.settings.index')->with('success', 'Settings saved successfully!');
+    }
+
+    public function uploadLogo(Request $request)
+    {
+        $request->validate(['invoice_logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048']);
+        $company_id = Auth::user()->company_id;
+
+        $file = $request->file('invoice_logo');
+        $filename = 'logo_' . $company_id . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $destDir = public_path('storage/logos');
+
+        if (!file_exists($destDir)) {
+            mkdir($destDir, 0755, true);
+        }
+
+        $file->move($destDir, $filename);
+        $path = 'logos/' . $filename;
+
+        $setting = Setting::firstOrCreate(['key' => 'invoice_logo', 'company_id' => $company_id]);
+        $setting->value = $path;
+        $setting->save();
+
+        return redirect()->route('admin.settings.index')->with('success', 'Invoice logo uploaded successfully!');
     }
 
     public function loadBranches()

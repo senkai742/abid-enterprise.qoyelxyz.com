@@ -14,6 +14,14 @@
 </head>
 <body>
     <div class="invoice-box">
+        @php
+            $logoSetting = \App\Models\Setting::where('key','invoice_logo')->where('company_id', $order->company_id ?? auth()->user()?->company_id)->first();
+        @endphp
+        @if($logoSetting && $logoSetting->value)
+            <div style="text-align:center; margin-bottom:15px;">
+                <img src="{{ asset('public/' . $logoSetting->value) }}" alt="Company Logo" style="max-height:90px; max-width:250px;">
+            </div>
+        @endif
         <h2>Invoice</h2>
         <p><strong>Customer:</strong> {{ $order->customer ? $order->customer->first_name . ' ' . $order->customer->last_name : 'N/A' }}</p>
         <p><strong>Address:</strong> {{ $order->customer->address ?? 'N/A' }}</p>

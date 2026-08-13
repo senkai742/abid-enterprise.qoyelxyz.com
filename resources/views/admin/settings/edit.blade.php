@@ -8,6 +8,36 @@
     <div class="col-sm-10">
         <div class="card">
             <div class="card-body">
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ session('success') }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ session('error') }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                @endif
+
+                @if($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <ul class="mb-0">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                @endif
 
                 <nav>
                     <div class="nav nav-tabs" id="nav-tab" role="tablist">
@@ -19,7 +49,7 @@
                 <div class="tab-content" id="nav-tabContent">
                     <div class="tab-pane border p-5 fade {{request()->tab==''?'active show':''}} " id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
 
-                        <form action="{{ route('admin.settings.store') }}" method="post">
+                        <form action="{{ route('admin.settings.store') }}" method="post" enctype="multipart/form-data">
                             @csrf
 
                             <div class="form-group">
@@ -93,10 +123,74 @@
 
                             </div>
 
-                            <div class="text-right">
-                                <button type="submit" class="btn btn-primary">{{ __('settings.Change_Setting') }}</button>
+                            <div class="form-group border-top pt-3">
+                                <label for="invoice_logo_file"><strong>Invoice Logo</strong></label>
+                                @php
+                                    $logoSetting = $settings->where('key','invoice_logo')->first();
+                                    $logoPath = $logoSetting ? $logoSetting->value : null;
+                                    $logoFileExists = $logoPath && file_exists(public_path($logoPath));
+                                @endphp
+
+                                {{-- Current saved logo status --}}
+                                <div class="mb-2 p-3" style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px;">
+                                    @if($logoFileExists)
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ asset('public/' . $logoPath) }}" alt="Current Logo"
+                                                style="max-height:80px; max-width:220px; border:1px solid #dee2e6; border-radius:4px; padding:4px; background:#fff; object-fit:contain;">
+                                            <div class="ml-3">
+                                                <span class="badge badge-success d-block mb-1" style="font-size:0.85rem;">✓ Logo Active</span>
+                                                <small class="text-muted">{{ basename($logoPath) }}</small>
+                                            </div>
+                                        </div>
+                                    @elseif($logoPath && !$logoFileExists)
+                                        <div class="text-warning">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Logo path saved but file is missing at public/{{ $logoPath }}.</strong><br>
+                                            <small class="text-muted">Please select an image file below and click Save Settings to upload it.</small>
+                                        </div>
+                                    @else
+                                        <div class="text-muted text-center py-2">
+                                            <i class="fas fa-image fa-2x mb-1" style="opacity:0.3;"></i><br>
+                                            <small>No logo uploaded yet. Choose an image below and click Save Settings.</small>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                {{-- Live preview area --}}
+                                <div id="logoPreviewBox" style="display:none; margin-bottom:10px;">
+                                    <small class="text-primary font-weight-bold d-block mb-1">Selected File Preview:</small>
+                                    <img id="logoPreviewImg" src="" alt="Preview"
+                                        style="max-height:80px; max-width:220px; border:2px dashed #007bff; border-radius:6px; padding:6px; background:#f8f9ff;">
+                                    <small id="logoFileName" class="d-block text-primary mt-1 font-weight-bold"></small>
+                                </div>
+
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="invoice_logo_file" name="invoice_logo" accept="image/*">
+                                    <label class="custom-file-label" for="invoice_logo_file" id="logoFileLabel">Choose new logo image…</label>
+                                </div>
+                                <small class="text-muted d-block mt-1">Recommended size: 300×100px (PNG, JPG, GIF, SVG). Max 2MB.</small>
+                            </div>
+
+                            <div class="text-right mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">{{ __('settings.Change_Setting') }}</button>
                             </div>
                         </form>
+
+                        <script>
+                        document.getElementById('invoice_logo_file').addEventListener('change', function() {
+                            var file = this.files[0];
+                            if (file) {
+                                document.getElementById('logoFileLabel').textContent = file.name;
+                                var reader = new FileReader();
+                                reader.onload = function(e) {
+                                    document.getElementById('logoPreviewImg').src = e.target.result;
+                                    document.getElementById('logoFileName').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+                                    document.getElementById('logoPreviewBox').style.display = 'block';
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                        });
+                        </script>
                     </div><!---------- end tab-one ------------->
 
                     <div class="tab-pane fade border p-5 {{request()->tab=='user'?'active show':''}}" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
