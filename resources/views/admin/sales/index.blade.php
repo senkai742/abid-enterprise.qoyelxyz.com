@@ -78,6 +78,10 @@
                             <ion-icon size="samll" name="eye"></ion-icon>
                         </button>
 
+                        <a href="{{ route('admin.sales.print', $order->id) }}" target="_blank" class="btn btn-sm btn-success" title="Print Invoice">
+                            <i class="fas fa-print"></i>
+                        </a>
+
                         @if($order->total() > $order->receivedAmount())
                             <!-- Button for Partial Payment -->
                             <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#partialPaymentModal" data-orders-id="{{ $order->id }}" data-remaining-amount="{{ $order->total() - $order->receivedAmount() }}">

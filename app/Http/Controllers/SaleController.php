@@ -253,7 +253,7 @@ class SaleController extends Controller
 
     public function print($id)
     {
-        $order = Sale::with(['customer', 'items'])->findOrFail($id);
+        $order = Sale::with(['customer', 'items.product'])->findOrFail($id);
         return view('orders.print', compact('order'));
     }
 }

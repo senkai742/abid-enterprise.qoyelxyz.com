@@ -40,7 +40,7 @@
                     <th>{{ 'Paid' }}</th>
                     <th>{{ 'Due' }}</th>
                     <th>{{ 'Created' }}</th>
-
+                    <th>{{ 'Actions' }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -55,7 +55,8 @@
                     <td>{{ config('settings.currency_symbol') }} {{number_format($purchase->paid_amount)}}</td>
                     <td>{{ config('settings.currency_symbol') }} {{number_format(max(0, $purchase->gr_total - $purchase->paid_amount))}}</td>
                     <td>{{$purchase->created_at}}</td>
-                    <td><a href="/admin/purchase/details/{{ $purchase->id }}" class="btn btn-success"><i class="fa fa-eye"></i></a>
+                    <td><a href="/admin/purchase/details/{{ $purchase->id }}" class="btn btn-success btn-sm" title="View Details"><i class="fa fa-eye"></i></a>
+                        <a href="{{ route('admin.purchase.print', $purchase->id) }}" target="_blank" class="btn btn-sm btn-warning" title="Print Invoice"><i class="fas fa-print"></i></a>
                         @php $due = max(0, $purchase->gr_total - $purchase->paid_amount); @endphp
                         @if($due > 0)
                         <button class="btn btn-sm btn-primary btn-pay-due"

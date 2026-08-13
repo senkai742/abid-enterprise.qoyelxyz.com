@@ -248,7 +248,7 @@ class PurchaseController extends Controller
 
     public function print($id)
     {
-        $order = Purchase::with(['supplier', 'items'])->findOrFail($id);
-        return view('purchase.print', compact('order'));
+        $order = Purchase::with(['supplier', 'items.product'])->findOrFail($id);
+        return view('admin.purchase.print', compact('order'));
     }
 }
